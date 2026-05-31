@@ -58,9 +58,10 @@ def collect_signals(
         from polydig_mcp.data import server as data
         for c in ("copper", "crude"):
             signals.append(data.get_commodity_price(c))
-        # SCFI freight-index anomaly over stored history (data-leads-price).
-        # No-op-graceful until values are fed via ingest_shipping_index.
-        signals.append(data.get_shipping_index("SCFI", db_path=str(db_path) if db_path else None))
+        # BDI dry-bulk freight anomaly (auto-scrapes East Money — free, with history).
+        signals.append(data.get_shipping_index("BDI", db_path=str(db_path) if db_path else None))
+        # SCFI container freight direction/momentum from FREE news (numeric is gated).
+        signals.append(data.get_scfi_signal())
     except Exception as e:  # noqa: BLE001
         signals.append({"source": "data", "signal_type": "error", "content": {"error": str(e)}})
 

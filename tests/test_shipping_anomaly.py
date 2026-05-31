@@ -62,6 +62,16 @@ def main() -> int:
     except Exception as e:  # noqa: BLE001 — network-dependent, don't fail the suite
         print(f"live dry-bulk fetch skipped (network?): {e}")
 
+    # Live: SCFI (container) direction/momentum from FREE Google News RSS
+    try:
+        from polydig_mcp.data.shipping import fetch_scfi_news_signal
+        scfi = fetch_scfi_news_signal()
+        print(f"live SCFI news signal: dir={scfi['direction']} streak={scfi['streak']} "
+              f"pct={scfi['pct_move']} score={scfi['anomaly_score']} ({len(scfi['headlines'])} headlines)")
+        assert scfi["direction"] in ("rising", "falling", "mixed")
+    except Exception as e:  # noqa: BLE001 — network-dependent, don't fail the suite
+        print(f"live SCFI news fetch skipped (network?): {e}")
+
     print("=== PASS ===")
     return 0
 

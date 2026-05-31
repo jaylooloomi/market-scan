@@ -66,6 +66,82 @@ def fetch_eastmoney_index(name: str, limit: int = 120) -> list[tuple[str, float]
     return series
 
 
+# ── SCFI (container) via free news (numeric index is login-gated) ────────────
+# Google News RSS is free + reliable + requests-based (stdio-safe). It can't give
+# the exact composite (that's gated), but it reliably gives DIRECTION + magnitude
+# (連N升 / 大漲15% / 連三漲) — which IS the leading signal for 長榮/陽明/萬海.
+_SCFI_NEWS_RSS = (
+    "https://news.google.com/rss/search?q=SCFI%20%E9%81%8B%E5%83%B9%E6%8C%87%E6%95%B8"
+    "&hl=zh-TW&gl=TW&ceid=TW:zh-Hant"
+)
+_RISE_KW = ["升", "漲", "飆", "紅", "彈", "揚", "走高", "走揚", "創高", "噴"]
+_FALL_KW = ["跌", "降", "落", "黑", "走弱", "回落", "下滑", "崩"]
+_PCT_RE = __import__("re").compile(r"(\d+(?:\.\d+)?)\s*[%％]")
+_PT_RE = __import__("re").compile(r"(\d{3,4}(?:\.\d+)?)\s*點")
+_STREAK_RE = __import__("re").compile(r"連(\d+|[一二三四五六七八九十]+)(?:周|週|日|升|漲|紅|黑)")
+
+
+def fetch_scfi_news_signal(max_items: int = 8) -> dict[str, Any]:
+    """Free SCFI direction/momentum signal from Google News RSS headlines.
+
+    Returns rise/fall counts, any magnitude (% or 點), recent headlines+links,
+    and an anomaly_score that's high when SCFI is in a sustained rise. Raises
+    SensorError on fetch failure.
+    """
+    import html as _html
+    import re as _re
+
+    import feedparser
+
+    parsed = feedparser.parse(_SCFI_NEWS_RSS)
+    if parsed.bozo and not parsed.entries:
+        raise SensorError("fetch_failed", f"SCFI news RSS unavailable: {getattr(parsed,'bozo_exception','?')}")
+
+    rise = fall = 0
+    pct = pts = None
+    streak = 0
+    headlines: list[dict[str, Any]] = []
+    for e in parsed.entries[:max_items]:
+        title = _html.unescape(e.get("title", ""))
+        if "SCFI" not in title.upper() and "運價" not in title and "运价" not in title:
+            continue
+        r_hit = sum(title.count(k) for k in _RISE_KW)
+        f_hit = sum(title.count(k) for k in _FALL_KW)
+        rise += 1 if r_hit > f_hit else 0
+        fall += 1 if f_hit > r_hit else 0
+        if pct is None and (m := _PCT_RE.search(title)):
+            pct = float(m.group(1))
+        if pts is None and (m := _PT_RE.search(title)):
+            pts = float(m.group(1))
+        if (m := _STREAK_RE.search(title)):
+            g = m.group(1)
+            cn = int(g) if g.isdigit() else "一二三四五六七八九十".find(g[0]) + 1
+            streak = max(streak, cn)
+        headlines.append({"title": title, "link": e.get("link")})
+
+    if not headlines:
+        raise SensorError("no_data", "no SCFI headlines found in news RSS")
+
+    direction = "rising" if rise > fall else ("falling" if fall > rise else "mixed")
+    # score: rising consensus + sustained streak + magnitude
+    score = 0.0
+    if direction == "rising":
+        score = min(1.0, 0.4 + 0.1 * rise + 0.1 * streak + (0.2 if (pct and pct >= 5) else 0))
+    return {
+        "index": "SCFI",
+        "direction": direction,
+        "rise_headlines": rise,
+        "fall_headlines": fall,
+        "streak": streak,
+        "pct_move": pct,
+        "points": pts,
+        "anomaly_score": round(score, 3),
+        "headlines": headlines[:5],
+        "note": "SCFI numeric index is login-gated; this is a free news-derived "
+                "direction/momentum signal (Google News RSS).",
+    }
+
+
 def detect_index_anomaly(
     series: list[tuple[str, float]],
     window: int = 8,

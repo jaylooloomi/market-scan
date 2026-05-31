@@ -114,6 +114,21 @@ def signals_to_candidates(
                 })
             continue
 
+        # Freight (BDI shipping_index / SCFI news) → 航運 candidate (data-leads-price)
+        if stype in ("scfi_signal", "shipping_index") and (score or 0) >= min_anomaly:
+            idx = content.get("index", "運價")
+            extra = (f"連{content['streak']}升 " if content.get("streak") else "") + \
+                    (f"+{content['pct_move']}% " if content.get("pct_move") else "")
+            raw.append({
+                "theme_hint": _theme_name("shipping_2020"),  # 航運三雄(貨櫃)
+                "trigger_summary": f"{idx} 運價{content.get('direction','異常')} {extra}→ 航運族群領先訊號",
+                "source": sig.get("source"),
+                "raw_signals": [sig],
+                "is_safety_net": False,
+                "dedup_key": "theme:shipping_2020",
+            })
+            continue
+
         if score is None or score < min_anomaly:
             continue
 

@@ -187,6 +187,30 @@ def get_shipping_index(index: str = "SCFI", days: int = 180, db_path: str | None
 
 
 @mcp.tool()
+def get_scfi_signal() -> dict[str, Any]:
+    """SCFI (container freight, 長榮/陽明/萬海) direction/momentum from FREE news.
+
+    The numeric SCFI composite is login-gated at sse.net.cn, so this derives the
+    leading signal (rising/falling, consecutive-rise streak, % magnitude) from
+    Google News RSS headlines — free, requests-based, stdio-safe.
+    """
+    try:
+        from polydig_mcp.data.shipping import fetch_scfi_news_signal
+        data = fetch_scfi_news_signal()
+    except SensorError as e:
+        return error_signal("data.scfi", "scfi_signal", e.message)
+    except Exception as e:  # noqa: BLE001
+        return error_signal("data.scfi", "scfi_signal", str(e))
+    return Signal(
+        source="data.scfi",
+        signal_type="scfi_signal",
+        content=data,
+        raw_url=(data["headlines"][0]["link"] if data.get("headlines") else None),
+        anomaly_score=data.get("anomaly_score"),
+    ).to_dict()
+
+
+@mcp.tool()
 def get_us_sector_move(sector: str = "nasdaq", days: int = 30) -> dict[str, Any]:
     """US sector / index % change (FRED keyless, requests-based, stdio-safe).
 
