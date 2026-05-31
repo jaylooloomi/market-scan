@@ -16,17 +16,44 @@ from polydig_mcp.reviewer.engine import review
 from polydig_mcp.reviewer.scout import signals_to_candidates
 
 
-def collect_signals(news_queries: list[str] | None = None) -> list[dict[str, Any]]:
-    """Gather raw signals from the sensors (in-process). Each sensor failure is
-    contained — a dead source never aborts the run."""
+def collect_signals(
+    news_queries: list[str] | None = None,
+    db_path: str | Path | None = None,
+) -> list[dict[str, Any]]:
+    """Gather raw signals from all 5 sensors (in-process). Each sensor failure is
+    contained — a dead source never aborts the run.
+
+    When *db_path* is given, news anomaly uses the cross-week SQLite baseline.
+    The top news spikes are cross-checked against Google Trends, and US sector
+    moves are pulled (cross-market US→TW linkage, spec §4.2).
+    """
     signals: list[dict[str, Any]] = []
 
+    # ── News anomaly (cross-week baseline when db_path given) ────────────────
+    news_signals: list[dict[str, Any]] = []
     try:
         from polydig_mcp.news import server as news
-        signals.extend(news.detect_news_anomaly(window_days=1.0, threshold=0.3, max_terms=10))
+        news_signals = news.detect_news_anomaly(
+            window_days=1.0, threshold=0.3, max_terms=10, db_path=str(db_path) if db_path else None
+        )
+        signals.extend(news_signals)
     except Exception as e:  # noqa: BLE001
         signals.append({"source": "news", "signal_type": "error", "content": {"error": str(e)}})
 
+    # ── Google Trends on the top spiking news terms (cross-source confirm) ────
+    try:
+        from polydig_mcp.news import server as news
+        top_terms = [
+            s["content"]["term"]
+            for s in news_signals
+            if s.get("signal_type") == "news_anomaly" and "term" in s.get("content", {})
+        ][:3]
+        for term in top_terms:
+            signals.append(news.google_trends_check(term, region="TW", timeframe="now 7-d"))
+    except Exception as e:  # noqa: BLE001
+        signals.append({"source": "news.gtrends", "signal_type": "error", "content": {"error": str(e)}})
+
+    # ── Data: commodities + shipping ─────────────────────────────────────────
     try:
         from polydig_mcp.data import server as data
         for c in ("copper", "crude"):
@@ -35,6 +62,15 @@ def collect_signals(news_queries: list[str] | None = None) -> list[dict[str, Any
     except Exception as e:  # noqa: BLE001
         signals.append({"source": "data", "signal_type": "error", "content": {"error": str(e)}})
 
+    # ── Cross-market: US sector moves → TW family candidates ─────────────────
+    try:
+        from polydig_mcp.data import server as data
+        for sector in ("nasdaq", "phlx_semi"):
+            signals.append(data.get_us_sector_move(sector, days=30))
+    except Exception as e:  # noqa: BLE001
+        signals.append({"source": "data.us_sector", "signal_type": "error", "content": {"error": str(e)}})
+
+    # ── Price safety net ─────────────────────────────────────────────────────
     try:
         from polydig_mcp.price import server as price
         signals.append(price.detect_limit_up_cluster(min_size=3))
@@ -58,7 +94,10 @@ def run_daily(
     and missed_catch records are persisted to SQLite (spec §6.4).
     """
     store = store or ThemeStore()
-    signals = (signal_provider or collect_signals)()
+    if signal_provider is not None:
+        signals = signal_provider()
+    else:
+        signals = collect_signals(db_path=db_path)
     candidates = signals_to_candidates(signals)
 
     verdicts = [review(c, store, mode=reviewer_mode) for c in candidates]

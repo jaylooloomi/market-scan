@@ -105,12 +105,18 @@ def detect_news_anomaly(
     threshold: float = 0.3,
     source: str | None = None,
     max_terms: int = 30,
+    db_path: str | None = None,
 ) -> list[dict[str, Any]]:
-    """Detect terms spiking in recent news vs the preceding period.
+    """Detect terms spiking in recent news.
 
-    Returns anomaly signals (one per spiking term) with anomaly_score >= threshold.
-    NOTE: this compares within the feed's available window; cross-week temporal
-    baselines require the Phase 3 history store.
+    Two modes:
+    - Default: compares recent vs preceding period WITHIN the feed's available
+      window (a few days).
+    - With `db_path`: also computes a true CROSS-WEEK baseline — today's term
+      count vs the mean daily count over the trailing 21 days (persisted in
+      SQLite). The reported anomaly_score is the max of the within-window and
+      cross-week scores, so a slow build-up over weeks is caught too. Today's
+      counts are persisted for future baselines (builds up over daily runs).
     """
     feeds = _selected_feeds(source)
     if not feeds:
@@ -125,23 +131,62 @@ def detect_news_anomaly(
             errors.append(error_signal("news." + feed.id, "news_anomaly", e.message))
 
     spikes = detect_term_spikes(all_items, window_days=window_days)
-    signals = [
-        Signal(
-            source="news.anomaly",
-            signal_type="news_anomaly",
-            content={
-                "term": s["term"],
-                "recent_count": s["recent_count"],
-                "prior_count": s["prior_count"],
-                "spike_ratio": s["spike_ratio"],
-                "window_days": window_days,
-            },
-            raw_url=s["example_url"],
-            anomaly_score=s["anomaly_score"],
-        ).to_dict()
-        for s in spikes
-        if s["anomaly_score"] >= threshold
-    ][:max_terms]
+
+    # Optional cross-week baseline via the SQLite term_history store.
+    db = None
+    today = None
+    if db_path:
+        try:
+            from datetime import date as _date
+
+            from polydig_mcp.storage.db import PolyDigDB
+
+            db = PolyDigDB(db_path)
+            today = _date.today().isoformat()
+        except Exception:  # noqa: BLE001 — storage optional, never abort detection
+            db = None
+
+    signals: list[dict[str, Any]] = []
+    for s in spikes:
+        score = s["anomaly_score"]
+        cross_week_ratio = None
+        if db is not None:
+            try:
+                baseline = db.term_baseline(s["term"], "news", lookback_days=21)
+                cross_week_ratio = s["recent_count"] / (baseline + 1)
+                cross_week_score = min(1.0, cross_week_ratio / 5.0)
+                score = max(score, cross_week_score)
+                db.upsert_term_count(today, s["term"], s["recent_count"], "news")
+            except Exception:  # noqa: BLE001
+                pass
+        if score < threshold:
+            continue
+        content = {
+            "term": s["term"],
+            "recent_count": s["recent_count"],
+            "prior_count": s["prior_count"],
+            "spike_ratio": s["spike_ratio"],
+            "window_days": window_days,
+        }
+        if cross_week_ratio is not None:
+            content["cross_week_ratio"] = round(cross_week_ratio, 2)
+        signals.append(
+            Signal(
+                source="news.anomaly",
+                signal_type="news_anomaly",
+                content=content,
+                raw_url=s["example_url"],
+                anomaly_score=round(score, 3),
+            ).to_dict()
+        )
+        if len(signals) >= max_terms:
+            break
+
+    if db is not None:
+        try:
+            db.close()
+        except Exception:  # noqa: BLE001
+            pass
     return signals + errors
 
 

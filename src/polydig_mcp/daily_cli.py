@@ -114,8 +114,15 @@ def main(argv: list[str] | None = None) -> int:
     )
     path = write_report(result["report_md"], output_dir=args.output, report_date=date.today())
 
+    # Delivery: also write a stable reports/latest.md so a scheduled routine
+    # always has one predictable path to surface, regardless of date.
+    from pathlib import Path
+    latest = Path(args.output) / "latest.md"
+    latest.write_text(result["report_md"], encoding="utf-8")
+
     print(f"candidates: {len(result['candidates'])}, verdicts: {len(result['verdicts'])}", file=sys.stderr)
     print(f"report written: {path}")
+    print(f"latest: {latest}")
     return 0
 
 
