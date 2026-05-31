@@ -25,6 +25,9 @@ agents = [
     "anthropic>=0.39",
     "chromadb>=0.5",
 ]
+schedule = [
+    "apscheduler>=3.10",
+]
 
 [project.scripts]
 polydig-validator = "polydig_validator.cli:main"
