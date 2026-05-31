@@ -1,0 +1,16 @@
+{
+  "mcpServers": {
+    "polydig-news": {
+      "command": "python",
+      "args": ["-m", "polydig_mcp.news.server"]
+    },
+    "polydig-data": {
+      "command": "python",
+      "args": ["-m", "polydig_mcp.data.server"]
+    },
+    "polydig-price": {
+      "command": "python",
+      "args": ["-m", "polydig_mcp.price.server"]
+    }
+  }
+}
