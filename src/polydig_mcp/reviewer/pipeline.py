@@ -114,10 +114,17 @@ def run_daily(
                 out.extend(members)
         return out
 
+    def _members_for(candidate: dict[str, Any], industry: str) -> list[dict[str, Any]]:
+        """Members of THIS candidate's own industry cluster (not the whole signal)."""
+        clusters = candidate["raw_signals"][0]["content"].get("clusters", {})
+        if isinstance(clusters, dict) and industry in clusters:
+            return clusters[industry]
+        return _flatten_members(clusters)
+
     missed: list[dict[str, Any]] = [
         {
-            "industry": c["theme_hint"].replace("族群漲停潮", ""),
-            "members": _flatten_members(c["raw_signals"][0]["content"].get("clusters", {})),
+            "industry": (ind := c["theme_hint"].replace("族群漲停潮", "")),
+            "members": _members_for(c, ind),
         }
         for c in safety_net_candidates
     ]
@@ -153,8 +160,7 @@ def run_daily(
                     enriched_missed: list[dict[str, Any]] = []
                     for c in safety_net_candidates:
                         industry = c["theme_hint"].replace("族群漲停潮", "")
-                        members_raw = c["raw_signals"][0]["content"].get("clusters", {})
-                        members_list = list(members_raw.values())[0] if members_raw else []
+                        members_list = _members_for(c, industry)
                         findings = run_backfill(industry, members_list, db)
                         db.insert_missed_catch(industry, members_list, findings, date_str)
                         enriched_missed.append({
