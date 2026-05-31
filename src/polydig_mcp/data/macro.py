@@ -87,8 +87,8 @@ def shipping_index(index: str = "BDI", days: int = 60) -> dict[str, Any]:
 # Maps a US sector signal to the relevant TW theme families.
 # Each family key matches a theme id or family keyword in themes.json.
 US_TW_MAPPING: dict[str, list[str]] = {
-    "nasdaq":        ["ai_first_wave_2023", "ai_main_2024", "silicon_photonics_2024"],
-    "phlx_semi":     ["ai_first_wave_2023", "silicon_photonics_2024", "silicon_wafer_2021"],
+    # nasdaq covers the semi/AI families too (PHLX semi index has no keyless FRED feed).
+    "nasdaq":        ["ai_first_wave_2023", "ai_main_2024", "silicon_photonics_2024", "silicon_wafer_2021"],
     "sp500":         ["ai_first_wave_2023"],
     "us_10y":        ["defense_2022"],  # rising yields → defensive/energy
     "vix":           ["defense_2022"],  # VIX spike → geopolitical risk
@@ -102,9 +102,10 @@ US_STRONG_MOVE_THRESHOLD = 0.05  # 5 %
 US_SECTOR_SERIES: dict[str, str] = {
     "nasdaq":        "NASDAQCOM",    # NASDAQ Composite Index (daily)
     "sp500":         "SP500",         # S&P 500 Index (daily)
-    "phlx_semi":     "PHLXSEMID",    # PHLX Semiconductor Sector Index (daily)
     "us_10y":        "DGS10",         # 10-Year Treasury yield (daily)
     "vix":           "VIXCLS",        # CBOE VIX volatility (daily)
+    # NOTE: PHLX Semiconductor (SOX) has NO keyless FRED series (PHLXSEMID 404s).
+    # Semi/AI cross-market exposure is captured via "nasdaq" instead.
 }
 
 

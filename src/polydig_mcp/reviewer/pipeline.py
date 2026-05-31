@@ -65,7 +65,7 @@ def collect_signals(
     # ── Cross-market: US sector moves → TW family candidates ─────────────────
     try:
         from polydig_mcp.data import server as data
-        for sector in ("nasdaq", "phlx_semi"):
+        for sector in ("nasdaq", "sp500"):
             signals.append(data.get_us_sector_move(sector, days=30))
     except Exception as e:  # noqa: BLE001
         signals.append({"source": "data.us_sector", "signal_type": "error", "content": {"error": str(e)}})

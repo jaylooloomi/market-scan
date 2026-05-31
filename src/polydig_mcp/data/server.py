@@ -128,7 +128,8 @@ def get_shipping_index(index: str = "BDI", days: int = 60) -> dict[str, Any]:
 def get_us_sector_move(sector: str = "nasdaq", days: int = 30) -> dict[str, Any]:
     """US sector / index % change (FRED keyless, requests-based, stdio-safe).
 
-    sector: nasdaq | sp500 | phlx_semi | us_10y | vix
+    sector: nasdaq | sp500 | us_10y | vix
+    (PHLX Semiconductor/SOX has no keyless FRED feed — semis covered via nasdaq.)
     Returns the % change over the period plus the TW family mapping
     (so Scout can translate a strong US move to a TW candidate theme).
     """
