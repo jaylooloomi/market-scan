@@ -1,0 +1,18 @@
+{
+  "$comment": "PolyDig project permissions. Pre-approves the sensor MCP tools and the daily-run Bash commands so a non-interactive scheduled routine (Routines UI) does not stall on permission prompts. Safe scope: read-only sensors + the polydig daily CLI.",
+  "permissions": {
+    "allow": [
+      "mcp__polydig-news",
+      "mcp__polydig-data",
+      "mcp__polydig-price",
+      "mcp__polydig-policy",
+      "mcp__polydig-roadmap",
+      "Bash(python -m polydig_mcp.daily_cli:*)",
+      "Bash(python -m polydig_mcp.reviewer.backtest:*)",
+      "Bash(polydig-daily:*)",
+      "Read(./reports/**)",
+      "Read(./src/polydig_mcp/history/themes.json)",
+      "Write(./reports/**)"
+    ]
+  }
+}

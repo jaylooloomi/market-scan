@@ -52,6 +52,8 @@ config/local.json
 *.db
 *.sqlite
 *.sqlite3
+# ralph-loop session state (local only)
+.claude/ralph-loop.local.md
 # Note: /reports/ is INTENTIONALLY tracked — each run is a meaningful artifact
 # (Phase 0 validation, future daily research reports, etc.)
 

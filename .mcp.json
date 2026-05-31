@@ -11,6 +11,14 @@
     "polydig-price": {
       "command": "python",
       "args": ["-m", "polydig_mcp.price.server"]
+    },
+    "polydig-policy": {
+      "command": "python",
+      "args": ["-m", "polydig_mcp.policy.server"]
+    },
+    "polydig-roadmap": {
+      "command": "python",
+      "args": ["-m", "polydig_mcp.roadmap.server"]
     }
   }
 }
