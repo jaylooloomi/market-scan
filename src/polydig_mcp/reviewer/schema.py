@@ -74,6 +74,7 @@ class ReviewVerdict:
     confidence: float
     reasoning: str
     expected_lead_days: int | None = None  # 預期領先市場的天數
+    sources: list[dict[str, Any]] = field(default_factory=list)  # [{source, signal_type, url}]
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -84,6 +85,7 @@ class ReviewVerdict:
             "signal_grade": self.signal_grade.value,
             "confidence": self.confidence,
             "expected_lead_days": self.expected_lead_days,
+            "sources": self.sources,
             "reasoning": self.reasoning,
         }
 

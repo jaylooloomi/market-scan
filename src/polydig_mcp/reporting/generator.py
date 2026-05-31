@@ -65,6 +65,25 @@ def _history_lines(hist: list[dict[str, Any]]) -> list[str]:
     return lines
 
 
+def _source_lines(sources: list[dict[str, Any]]) -> list[str]:
+    """新聞/資料來源連結 (條列). URL where available, else source name only."""
+    if not sources:
+        return []
+    out = ["- 來源/連結:"]
+    seen: set[str] = set()
+    for s in sources:
+        key = f"{s.get('source')}|{s.get('url')}"
+        if key in seen:
+            continue
+        seen.add(key)
+        url = s.get("url")
+        if url:
+            out.append(f"  • [{s.get('source','?')}] {url}")
+        else:
+            out.append(f"  • [{s.get('source','?')}]（{s.get('signal_type','')},無新聞連結）")
+    return out
+
+
 def _verdict_block(v: dict[str, Any]) -> str:
     grade_label = {"strong": "強訊號", "watchlist": "觀察清單", "reject": "駁回"}.get(
         v.get("signal_grade", ""), ""
@@ -76,6 +95,7 @@ def _verdict_block(v: dict[str, Any]) -> str:
         "",
         "**📰 新聞 → 題材 → 股票**",
         f"- 新聞/觸發:{v['trigger']}",
+        *_source_lines(v.get("sources", [])),
         f"- 題材:{v['theme']}",
         "- 受益股(條列):",
         *_stock_bullets(v.get("causal_tree", {})),
@@ -126,7 +146,9 @@ def generate_report(
         out.append("## ⚪ 駁回但有趣 (FYI)")
         out.append("")
         for v in by_grade["reject"]:
-            out.append(f"- **{v['theme']}** — {v.get('reasoning', '')}")
+            url = next((s["url"] for s in v.get("sources", []) if s.get("url")), None)
+            link = f" — 🔗 {url}" if url else ""
+            out.append(f"- **{v['theme']}**{link}")
         out.append("")
 
     if missed_clusters:

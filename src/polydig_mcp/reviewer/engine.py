@@ -31,6 +31,32 @@ from polydig_mcp.reviewer.schema import (
 REVIEWER_MODEL = "claude-sonnet-4-6"
 
 
+def _extract_sources(candidate: dict[str, Any]) -> list[dict[str, Any]]:
+    """Pull source + clickable URL from the candidate's raw signals.
+
+    News carries the article link directly (raw_url). FRED-backed signals
+    (commodity/shipping/us_sector) get a constructed FRED series page; the
+    limit-up cluster links the TWSE daily report. Honest: if there's no URL,
+    we keep url=None so the report shows the source name, not a fake link.
+    """
+    out: list[dict[str, Any]] = []
+    for sig in candidate.get("raw_signals", []):
+        content = sig.get("content", {})
+        url = sig.get("raw_url")
+        if not url:
+            fred = content.get("fred_series")
+            if fred:
+                url = f"https://fred.stlouisfed.org/series/{fred}"
+            elif sig.get("signal_type") == "limit_up_cluster":
+                url = "https://openapi.twse.com.tw/v1/exchangeReport/STOCK_DAY_ALL"
+        out.append({
+            "source": sig.get("source", "?"),
+            "signal_type": sig.get("signal_type", "?"),
+            "url": url,
+        })
+    return out
+
+
 def _heuristic_verdict(candidate: dict[str, Any], matches: list[dict[str, Any]]) -> ReviewVerdict:
     """Offline grade: borrow the top precedent's tree + verdict. Honest stand-in
     for the LLM's causal reasoning — good enough to exercise the pipeline."""
@@ -68,6 +94,7 @@ def _heuristic_verdict(candidate: dict[str, Any], matches: list[dict[str, Any]])
         confidence=round(top["similarity"], 3) if top else 0.0,
         reasoning=reasoning,
         expected_lead_days=None,
+        sources=_extract_sources(candidate),
     )
 
 
