@@ -1,7 +1,18 @@
 # PolyDig — Agent Handoff Document
 
 **Last updated**: 2026-05-31
-**Project status**: Phase 0 完成 (✅ GO) / Phase 1 待動工
+**Project status**: Phase 0 (✅ GO) / Phases 1-5 已建置(見下方更新) — 尚未 push
+
+> **2026-05-31 更新(接手 agent)**:Phase 1-5 的程式碼已建好並通過測試。
+> - **Phase 1**:news/data/price 三個 MCP server,全部通過 stdio 整合測試(`tests/test_mcp_integration.py`)。
+> - **Phase 2**:22 題材歷史庫(`src/polydig_mcp/history/themes.json`)+ Chroma 向量 RAG(+ token-overlap fallback)+ Reviewer schema/engine/scout + pipeline,dry pipeline 端到端通過(`tests/test_pipeline_dry.py`)。
+> - **Phase 3**:`.claude-plugin/plugin.json` + `.claude/agents`(scout/reviewer)+ `.claude/skills/polydig-daily` + `.claude/commands/dig.md` + 報告產生器 + `polydig-daily` headless CLI。
+> - **Phase 4**:policy/roadmap MCP server(含可行性註記 + stub)+ price safety-net 漲停族群偵測(TWSE OpenAPI,live 實測抓到當日 47 檔漲停 / 7 族群)。
+> - **Phase 5**:英文 README + `docs/zh-tw.md` + MIT LICENSE + demo(`polydig-daily --mode dry`)+ 疑難排解。
+> - **關鍵技術決策**:MCP server **一律不用 yfinance** —— yfinance 依賴 curl_cffi,會弄壞 Windows 的 MCP stdio 傳輸(`BrokenResourceError`)。改用 requests-based 來源(FinMind / FRED / TWSE OpenAPI)。yfinance 只留在 Phase 0 CLI validator。
+> - **未完成 / 誠實聲明**:Reviewer 的 **LLM 因果推理**只在 plugin subagent 或 `--mode llm`(需 API key)下實際運作,headless `--mode dry` 是啟發式替身;SCFI/BDI、DRAM、PTT、政府 HTML、法說逐字稿無免費來源,為 stub。**尚未 git commit/push**(等 Arthur 授權)。
+
+> ⚠️ **Phase 0 GO 的有效範圍（誠實聲明）**：Phase 0 證明的是「**在已知標的 + 已知觸發日期的前提下,領先訊號確實存在**」。cases.json 的標的與日期都是用後見之明手挑的。系統真正困難、也真正有價值的部分——**在當下沒有未來資訊時,自動辨識「事件 → 受益族群」並即時偵測觸發**——是 Phase 2 Scout+Reviewer 的核心賭注,Phase 0 並未驗證。接手時心裡要清楚這條線:premise 成立 → 值得做,但「能否即時偵測」仍是未知數。
 **For**: Any Claude (or other) agent picking up this project
 
 ---
@@ -44,7 +55,7 @@
 | Owner | Arthur (jaylooloomi, arthurwang@think4u-tech.com) |
 | License | MIT |
 | 發布計畫 | 上 Claude Code marketplace 公開 |
-| Repo state | 3 commits on main, all pushed |
+| Repo state | main, all committed work pushed (`git log` for latest) |
 
 ---
 

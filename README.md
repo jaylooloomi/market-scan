@@ -1,63 +1,112 @@
 # PolyDig
 
-> 台股題材早期偵測系統 — 在事件還沒發酵時抓到
+> Leading-edge theme detection for the Taiwan stock market — catch emerging themes **before** the market reacts.
 
-![Status](https://img.shields.io/badge/Phase%200-%E2%9C%85%20GO-brightgreen)
+![Phase 0](https://img.shields.io/badge/Phase%200-%E2%9C%85%20GO-brightgreen)
+![Phases 1-4](https://img.shields.io/badge/Phases%201--4-built-blue)
+![License](https://img.shields.io/badge/license-MIT-green)
 
-> **Phase 0 GO 決策已通過 (2026-05-31)**：15 個歷史測試點，6 STRONG + 5 WEAK，4/5 cases 有強領先訊號 → [完整結論](docs/superpowers/specs/2026-05-31-phase-0-results.md)
+PolyDig is a **research assistant** (not an auto-trader) that scans five signal sources,
+reasons out a causal propagation tree of beneficiary Taiwan stocks, retrieves historical
+analogues, and produces a daily Chinese-language research report — surfacing themes while
+the event is still early.
 
-## 一句話
+繁體中文說明見 [`docs/zh-tw.md`](docs/zh-tw.md)。
 
-PolyDig 從 5 個訊號源（**News / Price / Data / Policy / Roadmap**）偵測新興題材，用 LLM 推理因果樹 + 找歷史對應，每日產出研究助理報告，給個人投資人做台股題材研究。
+## North star
 
-## 系統靈魂
+> **Find signals where the event hasn't yet played out and still has leading power.**
 
-> **「找的是事件還沒發酵、有領先效果的訊號」**
-
-如果系統提報的時候股票已經漲了一波，這個系統就毫無價值。
-
-## Documents
-
-- 📘 [Design spec (v0.1)](docs/superpowers/specs/2026-05-31-polydig-design.md)
-- 📊 [Case study: 5 themes deep-dive](docs/research/01-theme-case-studies.md)
+Every feature must pass one test: *"Does this help the user discover it N days/weeks before
+the market?"* A signal that only fires after a sector has already rallied — however accurate —
+is **not** what this system is for. (Price is the sole exception: a deliberate safety net for
+catching what the leading sensors missed.)
 
 ## Architecture
 
 ```
-[News] [Price-safety-net] [Data] [Policy] [Roadmap]    ← 5 MCP servers
-                  ↓ (MCP tool calls)
-    Scout Agent (Haiku 4.5)
-                  ↓
-    Reviewer Agent (Sonnet 4.6 / Opus 4.7)
-       - 族群識別
-       - 因果樹三階展開
-       - 歷史對應檢索 (RAG)
-                  ↓
-       Daily report (markdown + push)
+ news-mcp   data-mcp   price-mcp(safety net)   policy-mcp   roadmap-mcp     ← 5 MCP sensor servers
+      \         \            |                   /            /
+            (MCP tool calls — sensors do anomaly detection only, no semantics)
+                                  │
+                  Scout agent (Claude Haiku) — flags anomalies, high false-positive tolerance
+                                  │
+                  Reviewer agent (Claude Sonnet) — 族群識別 → causal tree (tier 1/2/3) →
+                                  historical RAG (Chroma) → grade: strong / watchlist / reject
+                                  │
+                  Daily markdown report (中文)  ·  shown inline in Claude Code
 ```
 
-## Phases
-
-| # | Phase | Status |
-|---|---|---|
-| 0 | Leading Edge Validator (POC, 驗證根本假設) | ✅ **GO** (4/5 cases STRONG) |
-| 1 | MCP foundation (news, price, data) | ⏳ Next |
-| 2 | Scout + Reviewer agents | ⏳ |
-| 3 | Report generator | ⏳ |
-| 4 | Complete sensors + Price safety net + 漏抓回溯 | ⏳ |
-
-## Phase 0 Quick Start
+## Install
 
 ```bash
-pip install -e .
-polydig-validator --config cases.json --output reports/$(date +%Y-%m-%d)_validator
-# Output: reports/YYYY-MM-DD_validator/summary.md + per-case .md + summary.json
+pip install -e .                 # core (sensors + headless pipeline)
+pip install -e ".[agents]"       # + anthropic + chromadb (vector RAG, LLM reviewer)
 ```
+
+Create `.env` (gitignored) for the FinMind data token (free, 600 req/hr — register at finmindtrade.com):
+
+```
+FINMIND_TOKEN=your_token_here
+```
+
+Without a token the FinMind-backed tools return a graceful `missing_token` signal; the
+RSS / FRED / TWSE sensors still work.
+
+## Use it (two ways)
+
+**A. As a Claude Code plugin** — natural language:
+> 「今天有什麼?」 · 「幫我研究 矽光子」 · 「scan 一下台股」 · `/dig today` · `/dig research <theme>`
+
+The `polydig-daily` skill orchestrates the `polydig-scout` and `polydig-reviewer` subagents,
+which call the MCP servers registered in [`.mcp.json`](.mcp.json).
+
+**B. Headless (cron / CI):**
+```bash
+polydig-daily --mode dry                  # heuristic reviewer, offline-friendly demo
+polydig-daily --mode llm                  # LLM reviewer (needs ANTHROPIC_API_KEY)
+polydig-daily --persist ./vector_db       # enable Chroma vector RAG
+# → writes reports/YYYY-MM-DD.md
+```
+
+## Sensors
+
+| Server | Tools | Backend | Status |
+|---|---|---|---|
+| **news-mcp** | `fetch_news`, `detect_news_anomaly`, `google_trends_check`, `fetch_ptt`(stub) | RSS + pytrends | ✅ |
+| **data-mcp** | `get_finmind`, `get_institutional_flow`, `get_commodity_price`, `get_shipping_index`, `get_dram_price`(stub) | FinMind + FRED | ✅ / partial |
+| **price-mcp** | `get_quote`, `detect_limit_up_cluster`, `volume_anomaly` | FinMind + TWSE OpenAPI | ✅ |
+| **policy-mcp** | `list_policy_sources`, `fetch_policy_announcements` | gov RSS (feasibility-gated) | partial |
+| **roadmap-mcp** | `list_tracked_companies`, `parse_earnings_call`, `fetch_corp_roadmap`(stub) | text analysis | partial |
+
+All sensors return a uniform envelope `{timestamp, source, signal_type, content, raw_url, anomaly_score}`
+and **fail gracefully** (dead feed / missing token → structured error, never a crash).
+
+## Phase 0 validator (concept proof)
+
+```bash
+polydig-validator --config cases.json --output reports/$(date +%Y-%m-%d)_validator
+```
+15 historical test points → 6 STRONG / 5 WEAK / 3 TOO_LATE / 1 NULL, 4/5 cases STRONG → **GO**.
+See [the GO report](docs/superpowers/specs/2026-05-31-phase-0-results.md).
+
+## Honest limitations
+
+- **Phase 0 scope**: proves leading signals *exist* given hindsight-selected tickers/dates. Live
+  detection (identifying the beneficiary sector in real time, no future info) is the Phase 2 bet.
+- **Reviewer LLM reasoning** runs through Claude (Claude Code subagent, or `--mode llm` with an API
+  key). The headless `--mode dry` uses a heuristic stand-in — enough to exercise the pipeline, not
+  a substitute for the LLM's causal reasoning.
+- **No yfinance in the MCP servers**: yfinance pulls in `curl_cffi`, which corrupts the MCP stdio
+  transport on Windows. Servers use requests-based sources (FinMind / FRED / TWSE). yfinance stays
+  in the Phase 0 CLI validator only.
+- **SCFI/BDI, DRAM spot, PTT/Dcard, gov HTML, earnings transcripts**: no free/stable feed — these are
+  stubbed with honest TODOs (see each server's README).
 
 ## Tech stack
 
-- Python 3.11+
-- Anthropic Claude SDK (Haiku 4.5 / Sonnet 4.6)
-- MCP (Model Context Protocol)
-- [FinMind](https://finmindtrade.com/) — 台股資料
-- SQLite + Chroma (vector DB for 歷史庫 RAG)
+Python 3.11+ · MCP (`mcp` FastMCP) · Anthropic Claude SDK · FinMind / FRED / TWSE OpenAPI · Chroma (vector RAG) · SQLite.
+
+## License
+
+MIT — see [LICENSE](LICENSE).
