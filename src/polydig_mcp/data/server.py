@@ -107,20 +107,73 @@ def get_commodity_price(commodity: str, days: int = 60) -> dict[str, Any]:
     ).to_dict()
 
 
+import os as _os
+
+
+def _db_path(explicit: str | None) -> str:
+    return explicit or _os.getenv("POLYDIG_DB", "polydig.db")
+
+
 @mcp.tool()
-def get_shipping_index(index: str = "BDI", days: int = 60) -> dict[str, Any]:
-    """Shipping freight index (ETF proxy — true SCFI/BDI paywalled, see note)."""
+def ingest_shipping_index(
+    name: str, date: str, value: float, source: str = "manual", db_path: str | None = None
+) -> dict[str, Any]:
+    """Feed one freight-index reading (e.g. SCFI for a week) into history.
+
+    SCFI/BDI have no keyless live feed (sse.net.cn login-gated, Baltic paywalled),
+    so values are ingested here — weekly manual entry, or a future paid/auth source.
+    name e.g. "SCFI"; date "YYYY-MM-DD"; value the index number.
+    """
     try:
-        data = macro.shipping_index(index, days)
-    except SensorError as e:
-        return error_signal("data.shipping", "shipping_index", e.message, index=index)
-    pct = data.get("pct_change")
-    score = min(1.0, abs(pct) * 2) if pct is not None else None
+        from polydig_mcp.storage.db import PolyDigDB
+        db = PolyDigDB(_db_path(db_path))
+        db.upsert_index_value(name.upper(), date, float(value), source)
+        n = len(db.index_series(name.upper(), lookback_days=3650))
+        db.close()
+    except Exception as e:  # noqa: BLE001
+        return error_signal("data.shipping", "shipping_ingest", str(e), index=name)
+    return Signal(
+        source="data.shipping",
+        signal_type="shipping_ingest",
+        content={"index": name.upper(), "date": date, "value": value, "stored_points": n},
+        anomaly_score=None,
+    ).to_dict()
+
+
+@mcp.tool()
+def get_shipping_index(index: str = "SCFI", days: int = 180, db_path: str | None = None) -> dict[str, Any]:
+    """Freight-index anomaly over the stored history (data-leads-price sensor).
+
+    Computes a streak + magnitude + z-score anomaly on the index series fed via
+    `ingest_shipping_index`. Returns a graceful note if no history is stored yet
+    (no keyless SCFI/BDI feed — see ingest_shipping_index).
+    """
+    try:
+        from polydig_mcp.data.shipping import detect_index_anomaly
+        from polydig_mcp.storage.db import PolyDigDB
+        db = PolyDigDB(_db_path(db_path))
+        series = db.index_series(index.upper(), lookback_days=days)
+        db.close()
+    except Exception as e:  # noqa: BLE001
+        return error_signal("data.shipping", "shipping_index", str(e), index=index)
+
+    if not series:
+        return error_signal(
+            "data.shipping", "shipping_index",
+            f"no stored history for {index.upper()} — feed via ingest_shipping_index "
+            "(SCFI/BDI have no keyless live feed: sse.net.cn login-gated, Baltic paywalled)",
+            index=index.upper(),
+        )
+
+    result = detect_index_anomaly(series)
+    result["index"] = index.upper()
+    result["as_of"] = series[-1][0]
     return Signal(
         source="data.shipping",
         signal_type="shipping_index",
-        content=data,
-        anomaly_score=round(score, 3) if score is not None else None,
+        content=result,
+        raw_url="https://en.sse.net.cn/indices/scfinew.jsp",
+        anomaly_score=result.get("anomaly_score"),
     ).to_dict()
 
 

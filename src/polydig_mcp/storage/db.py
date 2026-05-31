@@ -79,6 +79,15 @@ CREATE TABLE IF NOT EXISTS missed_catch (
     members_json  TEXT NOT NULL,
     backfill_json TEXT NOT NULL
 );
+
+CREATE TABLE IF NOT EXISTS index_history (
+    id     INTEGER PRIMARY KEY AUTOINCREMENT,
+    name   TEXT NOT NULL,           -- e.g. "SCFI", "BDI"
+    date   TEXT NOT NULL,           -- YYYY-MM-DD (the index's print date)
+    value  REAL NOT NULL,
+    source TEXT NOT NULL,
+    UNIQUE(name, date)
+);
 """
 
 
@@ -261,6 +270,26 @@ class PolyDigDB:
                 ),
             )
             return cur.lastrowid  # type: ignore[return-value]
+
+    # ── index_history (freight/macro index time series) ──────────────────────
+
+    def upsert_index_value(self, name: str, date_str: str, value: float, source: str) -> None:
+        """Insert/replace one index reading (e.g. SCFI for a given week)."""
+        with self._tx() as cur:
+            cur.execute(
+                "INSERT OR REPLACE INTO index_history (name, date, value, source) "
+                "VALUES (?, ?, ?, ?)",
+                (name, date_str, float(value), source),
+            )
+
+    def index_series(self, name: str, lookback_days: int = 180) -> list[tuple[str, float]]:
+        """Return [(date, value)] for an index over the trailing window, ascending."""
+        since = (date.today() - timedelta(days=lookback_days)).isoformat()
+        rows = self._conn.execute(
+            "SELECT date, value FROM index_history WHERE name=? AND date>=? ORDER BY date ASC",
+            (name, since),
+        ).fetchall()
+        return [(r["date"], r["value"]) for r in rows]
 
     def query_missed_catch(
         self, since: str | None = None, limit: int = 100
