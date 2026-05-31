@@ -9,41 +9,83 @@ Sections (design spec §6.6):
 from __future__ import annotations
 
 from datetime import date
+from functools import lru_cache
 from pathlib import Path
 from typing import Any
 
 
-def _tree_md(tree: dict[str, Any]) -> str:
-    labels = {"tier_1": "一階", "tier_2": "二階", "tier_3": "三階", "tier_4": "四階"}
-    lines = []
-    for tier, label in labels.items():
-        members = tree.get(tier)
-        if not members:
-            continue
-        reps = "、".join(
-            f"{m['name']}({m['ticker']}{f', T+{m['lag_days']}d' if m.get('lag_days') else ''})"
-            for m in members
-        )
-        lines.append(f"  - **{label}**：{reps}")
-    return "\n".join(lines) if lines else "  - (無因果樹)"
+@lru_cache(maxsize=1)
+def _themes_by_id() -> dict[str, Any]:
+    """Lookup of the historical theme DB (id -> theme) for enriching the
+    歷史 section with date + that theme's beneficiary stocks."""
+    try:
+        from polydig_mcp.history.store import load_themes
+        return {t["id"]: t for t in load_themes()}
+    except Exception:  # noqa: BLE001
+        return {}
+
+
+_TIER_LABEL = {"tier_1": "一階", "tier_2": "二階", "tier_3": "三階", "tier_4": "四階"}
+
+
+def _stock_bullets(tree: dict[str, Any], indent: str = "  ") -> list[str]:
+    """Bulleted (條列式) beneficiary stocks by tier."""
+    lines: list[str] = []
+    for tier, label in _TIER_LABEL.items():
+        for m in tree.get(tier, []):
+            lag = f"，T+{m['lag_days']}d" if m.get("lag_days") else ""
+            role = f" — {m['role']}" if m.get("role") else ""
+            lines.append(f"{indent}• {m['name']}({m['ticker']}){role}（{label}{lag}）")
+    return lines or [f"{indent}• (無對應個股)"]
+
+
+def _history_lines(hist: list[dict[str, Any]]) -> list[str]:
+    """歷史 → 日期 → 題材 → 哪些股票 (條列式), enriched from the theme DB."""
+    if not hist:
+        return ["  • (無歷史對應)"]
+    by_id = _themes_by_id()
+    lines: list[str] = []
+    for h in hist:
+        theme = by_id.get(h.get("theme_id"))
+        date_str = theme.get("trigger_date", "—") if theme else "—"
+        name = (theme.get("name") if theme else None) or h.get("event", "?")
+        sim = h.get("similarity")
+        sim_str = f"，相似 {sim:.2f}" if isinstance(sim, (int, float)) else ""
+        outcome = h.get("outcome") or (theme.get("outcome") if theme else "")
+        lines.append(f"  • {date_str}｜{name}{sim_str}" + (f"（結果:{outcome}）" if outcome else ""))
+        # that historical theme's own beneficiary stocks (條列)
+        if theme:
+            t1 = theme.get("causal_tree", {}).get("tier_1", [])
+            if t1:
+                stocks = "、".join(f"{m['name']}({m['ticker']})" for m in t1)
+                lines.append(f"    當時受益股:{stocks}")
+            # deeper analogue (e.g. SARS) noted if present
+            for a in theme.get("historical_analogue", [])[:1]:
+                lines.append(f"    更早對應:{a.get('event','')}（{a.get('outcome','')}）")
+    return lines
 
 
 def _verdict_block(v: dict[str, Any]) -> str:
-    hist = v.get("historical_match", [])
-    hist_md = (
-        "；".join(f"{h['event']}(相似 {h['similarity']:.2f} → {h['outcome']})" for h in hist)
-        if hist else "無歷史對應"
+    grade_label = {"strong": "強訊號", "watchlist": "觀察清單", "reject": "駁回"}.get(
+        v.get("signal_grade", ""), ""
     )
     lead = v.get("expected_lead_days")
-    lead_md = f"，預期領先 ~{lead} 天" if lead else ""
-    return (
-        f"### {v['theme']}\n"
-        f"- **觸發**：{v['trigger']}\n"
-        f"- **信心**：{v.get('confidence', 0):.2f}{lead_md}\n"
-        f"- **因果樹**：\n{_tree_md(v.get('causal_tree', {}))}\n"
-        f"- **歷史對應**：{hist_md}\n"
-        f"- **推理**：{v.get('reasoning', '')}\n"
-    )
+    lead_md = f" · 預期領先 ~{lead} 天" if lead else ""
+    lines = [
+        f"### {v['theme']}（{grade_label} · 信心 {v.get('confidence', 0):.2f}{lead_md}）",
+        "",
+        "**📰 新聞 → 題材 → 股票**",
+        f"- 新聞/觸發:{v['trigger']}",
+        f"- 題材:{v['theme']}",
+        "- 受益股(條列):",
+        *_stock_bullets(v.get("causal_tree", {})),
+        "",
+        "**📜 歷史 → 日期 → 題材 → 股票**",
+        *_history_lines(v.get("historical_match", [])),
+    ]
+    if v.get("reasoning"):
+        lines += ["", f"- 推理:{v['reasoning']}"]
+    return "\n".join(lines) + "\n"
 
 
 def generate_report(
