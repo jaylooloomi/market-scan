@@ -2,7 +2,9 @@
 
 > 台股題材早期偵測系統 — 在事件還沒發酵時抓到
 
-![Status](https://img.shields.io/badge/status-Phase%200%20planning-yellow)
+![Status](https://img.shields.io/badge/Phase%200-%E2%9C%85%20GO-brightgreen)
+
+> **Phase 0 GO 決策已通過 (2026-05-31)**：15 個歷史測試點，6 STRONG + 5 WEAK，4/5 cases 有強領先訊號 → [完整結論](docs/superpowers/specs/2026-05-31-phase-0-results.md)
 
 ## 一句話
 
@@ -38,11 +40,19 @@ PolyDig 從 5 個訊號源（**News / Price / Data / Policy / Roadmap**）偵測
 
 | # | Phase | Status |
 |---|---|---|
-| 0 | Leading Edge Validator (POC, 驗證根本假設) | 🚧 Planning |
-| 1 | MCP foundation (news, price, data) | ⏳ |
+| 0 | Leading Edge Validator (POC, 驗證根本假設) | ✅ **GO** (4/5 cases STRONG) |
+| 1 | MCP foundation (news, price, data) | ⏳ Next |
 | 2 | Scout + Reviewer agents | ⏳ |
 | 3 | Report generator | ⏳ |
 | 4 | Complete sensors + Price safety net + 漏抓回溯 | ⏳ |
+
+## Phase 0 Quick Start
+
+```bash
+pip install -e .
+polydig-validator --config cases.json --output reports/$(date +%Y-%m-%d)_validator
+# Output: reports/YYYY-MM-DD_validator/summary.md + per-case .md + summary.json
+```
 
 ## Tech stack
 
