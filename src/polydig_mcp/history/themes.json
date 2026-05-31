@@ -1,0 +1,571 @@
+{
+  "metadata": {
+    "version": "0.1",
+    "created": "2026-05-31",
+    "source": "docs/research/01-theme-case-studies.md",
+    "description": "Seed historical theme knowledge base for the Reviewer agent RAG. 5 deep cases (full causal trees) + 15 table-level themes. lag_days = expected delay from trigger to that tier's price reaction.",
+    "verdict_legend": {
+      "strong": "強訊號 — 強歷史對應 + 強邏輯,直接列入報告",
+      "watchlist": "觀察清單 — 歷史弱但邏輯成立(新型題材)",
+      "reject": "駁回"
+    }
+  },
+  "themes": [
+    {
+      "id": "mask_2020",
+      "name": "口罩/防疫股",
+      "year": "2020",
+      "trigger_type": "News",
+      "trigger_event": "武漢肺炎人傳人確認 → 台灣禁口罩出口",
+      "trigger_date": "2020-01-20",
+      "actionable_window_days": 7,
+      "hold_period": "1-3 個月(漲快跌也快)",
+      "signal_sources_needed": ["news-zh", "news-intl", "gtrends", "ptt"],
+      "causal_tree": {
+        "tier_1": [
+          {"ticker": "9919", "name": "康那香", "lag_days": 7, "role": "口罩成品/不織布"},
+          {"ticker": "1325", "name": "恆大", "lag_days": 7, "role": "熔噴布"},
+          {"ticker": "6504", "name": "南六", "lag_days": 7, "role": "防護衣"},
+          {"ticker": "4736", "name": "泰博", "lag_days": 7, "role": "體溫測量"},
+          {"ticker": "1781", "name": "合世", "lag_days": 7, "role": "體溫測量"}
+        ],
+        "tier_2": [
+          {"ticker": "1760", "name": "寶齡富錦", "lag_days": 30, "role": "篩檢試劑"},
+          {"ticker": "4117", "name": "普生", "lag_days": 30, "role": "篩檢試劑"},
+          {"ticker": "4128", "name": "中天", "lag_days": 30, "role": "抗病毒藥物概念"}
+        ],
+        "tier_3": [
+          {"ticker": "6547", "name": "高端", "lag_days": 540, "role": "國產疫苗(EUA 拖到 2021/7)"},
+          {"ticker": "3081", "name": "聯亞", "lag_days": 540, "role": "國產疫苗"},
+          {"ticker": "4142", "name": "國光生", "lag_days": 540, "role": "國產疫苗"}
+        ]
+      },
+      "historical_analogue": [
+        {"event": "SARS 2003", "similarity": 0.85, "outcome": "口罩相關股漲幅 200%+ in 3 months"}
+      ],
+      "outcome": "康那香 16→45 元高點(約 +180%)",
+      "reviewer_verdict": "strong",
+      "notes": "純新聞驅動 + 短週期典範。三訊號齊發:國際新聞、Google Trends、PTT 討論度。"
+    },
+    {
+      "id": "shipping_2020",
+      "name": "航運三雄(貨櫃)",
+      "year": "2020-2021",
+      "trigger_type": "Data",
+      "trigger_event": "SCFI 運價指數從 ~900 點起漲(連續上揚)",
+      "trigger_date": "2020-06-15",
+      "actionable_window_days": 270,
+      "hold_period": "6-12 個月",
+      "signal_sources_needed": ["data-shipping"],
+      "causal_tree": {
+        "tier_1": [
+          {"ticker": "2603", "name": "長榮", "lag_days": 30, "role": "貨櫃航運"},
+          {"ticker": "2609", "name": "陽明", "lag_days": 30, "role": "貨櫃航運"},
+          {"ticker": "2615", "name": "萬海", "lag_days": 30, "role": "貨櫃航運"},
+          {"ticker": "2637", "name": "慧洋-KY", "lag_days": 30, "role": "散裝航運"},
+          {"ticker": "2606", "name": "裕民", "lag_days": 30, "role": "散裝航運"},
+          {"ticker": "2605", "name": "新興", "lag_days": 30, "role": "散裝航運"},
+          {"ticker": "5608", "name": "四維航", "lag_days": 30, "role": "油輪"}
+        ],
+        "tier_2": [
+          {"ticker": "2208", "name": "台船", "lag_days": 120, "role": "造船"}
+        ],
+        "tier_3": [
+          {"ticker": "5609", "name": "中菲行", "lag_days": 180, "role": "物流"},
+          {"ticker": "2608", "name": "嘉里大榮", "lag_days": 180, "role": "物流"}
+        ]
+      },
+      "historical_analogue": [
+        {"event": "2003-2004 SARS 後復甦運價飆漲", "similarity": 0.5, "outcome": "規模較小,弱對應"}
+      ],
+      "outcome": "長榮 10→230 元高點(約 +2200%)",
+      "reviewer_verdict": "strong",
+      "notes": "數據先行典範。新聞登場時長榮已從 10 漲到 40(+4x)。關鍵:必須追 SCFI/BDI,純看新聞會漏抓。"
+    },
+    {
+      "id": "ai_first_wave_2023",
+      "name": "AI 概念股第一波",
+      "year": "2023",
+      "trigger_type": "News-International",
+      "trigger_event": "ChatGPT 上線 → 微軟整合 → NVIDIA Q1 財報暴擊",
+      "trigger_date": "2022-11-30",
+      "actionable_window_days": 180,
+      "hold_period": "1-3 年(主升段)",
+      "signal_sources_needed": ["news-intl", "gtrends", "cross-market-us"],
+      "causal_tree": {
+        "tier_1": [
+          {"ticker": "3231", "name": "緯創", "lag_days": 150, "role": "AI 伺服器組裝"},
+          {"ticker": "2382", "name": "廣達", "lag_days": 150, "role": "AI 伺服器組裝"},
+          {"ticker": "2376", "name": "技嘉", "lag_days": 150, "role": "AI 伺服器"},
+          {"ticker": "2356", "name": "英業達", "lag_days": 150, "role": "AI 伺服器組裝"}
+        ],
+        "tier_2": [
+          {"ticker": "2330", "name": "台積電", "lag_days": 210, "role": "CoWoS 先進封裝"},
+          {"ticker": "3131", "name": "弘塑", "lag_days": 210, "role": "CoWoS 設備"},
+          {"ticker": "6187", "name": "萬潤", "lag_days": 210, "role": "CoWoS 設備"},
+          {"ticker": "3583", "name": "辛耘", "lag_days": 210, "role": "CoWoS 設備"},
+          {"ticker": "3443", "name": "創意", "lag_days": 210, "role": "ASIC/矽智財"},
+          {"ticker": "3661", "name": "世芯-KY", "lag_days": 210, "role": "ASIC 設計"}
+        ],
+        "tier_3": [
+          {"ticker": "3017", "name": "奇鋐", "lag_days": 300, "role": "AI 散熱(液冷)"},
+          {"ticker": "3324", "name": "雙鴻", "lag_days": 300, "role": "AI 散熱"},
+          {"ticker": "3211", "name": "順達", "lag_days": 300, "role": "BBU 電池備援"},
+          {"ticker": "6781", "name": "AES-KY", "lag_days": 300, "role": "BBU 電池備援"},
+          {"ticker": "2345", "name": "智邦", "lag_days": 300, "role": "高速網路"},
+          {"ticker": "6669", "name": "緯穎", "lag_days": 300, "role": "高速網路/雲端"}
+        ],
+        "tier_4": [
+          {"ticker": "1513", "name": "中興電", "lag_days": 540, "role": "重電/電網(AI 用電)"},
+          {"ticker": "1519", "name": "華城", "lag_days": 540, "role": "重電/電網"},
+          {"ticker": "1609", "name": "大亞", "lag_days": 540, "role": "銅電纜"},
+          {"ticker": "1612", "name": "宏泰", "lag_days": 540, "role": "銅電纜"}
+        ]
+      },
+      "historical_analogue": [
+        {"event": "2017-2018 AI 第一波", "similarity": 0.3, "outcome": "規模小,不夠類比"}
+      ],
+      "outcome": "緯創 30→120 元(約 +300%),主升段延續至 2024",
+      "reviewer_verdict": "watchlist",
+      "notes": "新型題材無完美歷史對應,但因果鏈強 → 應降級為觀察清單而非駁回。跨市場:美股 NVIDIA 領先台股緯創。"
+    },
+    {
+      "id": "defense_2022",
+      "name": "國防/俄烏戰爭",
+      "year": "2022",
+      "trigger_type": "News-Sudden",
+      "trigger_event": "俄烏邊境集結 → 普丁承認頓巴斯 → 全面入侵",
+      "trigger_date": "2021-11-15",
+      "actionable_window_days": 3,
+      "hold_period": "3-6 個月(戰爭越久效應遞減)",
+      "signal_sources_needed": ["news-intl"],
+      "causal_tree": {
+        "tier_1": [
+          {"ticker": "2634", "name": "漢翔", "lag_days": 14, "role": "軍機/直升機"},
+          {"ticker": "8033", "name": "雷虎", "lag_days": 14, "role": "無人機"},
+          {"ticker": "1591", "name": "駿吉-KY", "lag_days": 14, "role": "雷達/通訊"},
+          {"ticker": "3707", "name": "漢磊", "lag_days": 14, "role": "通訊"},
+          {"ticker": "8076", "name": "智飛", "lag_days": 14, "role": "無人機"}
+        ],
+        "tier_2": [
+          {"ticker": "6505", "name": "台塑化", "lag_days": 60, "role": "油氣/煉油"},
+          {"ticker": "1907", "name": "永豐餘", "lag_days": 60, "role": "天然氣"}
+        ],
+        "tier_3": [
+          {"ticker": "1722", "name": "台肥", "lag_days": 90, "role": "化肥(俄烏為小麥大國)"},
+          {"ticker": "1701", "name": "中化", "lag_days": 90, "role": "化肥"}
+        ]
+      },
+      "historical_analogue": [
+        {"event": "2014 克里米亞危機", "similarity": 0.6, "outcome": "小型對應"},
+        {"event": "1990 波灣戰爭", "similarity": 0.7, "outcome": "油價 + 國防"}
+      ],
+      "outcome": "漢翔 26→50 元高點(約 +90%);Phase 0 驗證為弱領先(180d ~+15-37%)",
+      "reviewer_verdict": "strong",
+      "notes": "突發新聞,反應 2-3 天極快。地緣事件可疊加(俄烏+台海+巴以)。可在全面入侵前一週提報觀察。"
+    },
+    {
+      "id": "silicon_photonics_2024",
+      "name": "矽光子/CPO",
+      "year": "2024-2025",
+      "trigger_type": "Roadmap",
+      "trigger_event": "NVIDIA GTC CPO 路線圖 → SEMI 矽光子聯盟成立 → TSMC 確認 2026 量產",
+      "trigger_date": "2023-03-21",
+      "actionable_window_days": 365,
+      "hold_period": "1-2 年(到 2026/2027 量產主升段)",
+      "signal_sources_needed": ["roadmap", "news-intl"],
+      "causal_tree": {
+        "tier_1": [
+          {"ticker": "3163", "name": "波若威", "lag_days": 90, "role": "光學引擎/PLC"},
+          {"ticker": "4979", "name": "華星光", "lag_days": 90, "role": "高速光模組"},
+          {"ticker": "4977", "name": "眾達-KY", "lag_days": 90, "role": "高速光模組"},
+          {"ticker": "6442", "name": "光聖", "lag_days": 90, "role": "光通訊"}
+        ],
+        "tier_2": [
+          {"ticker": "3131", "name": "弘塑", "lag_days": 150, "role": "CoWoS 設備"},
+          {"ticker": "3583", "name": "辛耘", "lag_days": 150, "role": "CoWoS 設備"},
+          {"ticker": "3037", "name": "欣興", "lag_days": 150, "role": "載板升級"},
+          {"ticker": "6274", "name": "台燿", "lag_days": 150, "role": "載板材料"},
+          {"ticker": "2360", "name": "致茂", "lag_days": 150, "role": "測試"},
+          {"ticker": "6706", "name": "惠特", "lag_days": 150, "role": "測試"}
+        ],
+        "tier_3": [
+          {"ticker": "8996", "name": "高力", "lag_days": 365, "role": "散熱規格升級"}
+        ]
+      },
+      "historical_analogue": [
+        {"event": "2000 年光通訊泡沫", "similarity": 0.4, "outcome": "負面案例,謹慎"}
+      ],
+      "outcome": "波若威等 2025/Q4 集體噴出(一週飆 44%)",
+      "reviewer_verdict": "watchlist",
+      "notes": "全新技術,歷史弱但邏輯強 + TSMC 量產背書 → 應在 2024/9 SEMI 聯盟成立時通過。Roadmap 領先股價 6-12 個月,最佳早期指標。"
+    },
+    {
+      "id": "5g_2019",
+      "name": "5G 概念股第一波",
+      "year": "2019",
+      "trigger_type": "News-International",
+      "trigger_event": "5G 商轉前全球布局",
+      "trigger_date": "2019-01-01",
+      "signal_sources_needed": ["news-intl", "roadmap"],
+      "causal_tree": {
+        "tier_1": [
+          {"ticker": "6285", "name": "啟碁", "lag_days": null, "role": "網通設備"},
+          {"ticker": "6274", "name": "台燿", "lag_days": null, "role": "高頻 PCB 材料"}
+        ],
+        "tier_2": [],
+        "tier_3": []
+      },
+      "historical_analogue": [],
+      "outcome": "5G 商轉前布局,全球同步",
+      "reviewer_verdict": "watchlist",
+      "notes": "table-level theme(非深度案例)。"
+    },
+    {
+      "id": "vaccine_2020",
+      "name": "疫苗股",
+      "year": "2020",
+      "trigger_type": "Policy",
+      "trigger_event": "國產疫苗政策保護 + EUA",
+      "trigger_date": "2020-05-01",
+      "signal_sources_needed": ["policy", "news-zh"],
+      "causal_tree": {
+        "tier_1": [
+          {"ticker": "6547", "name": "高端", "lag_days": null, "role": "國產疫苗(政策保護)"},
+          {"ticker": "3081", "name": "聯亞", "lag_days": null, "role": "國產疫苗"}
+        ],
+        "tier_2": [],
+        "tier_3": []
+      },
+      "historical_analogue": [],
+      "outcome": "高端 EUA 政策保護加成",
+      "reviewer_verdict": "watchlist",
+      "notes": "table-level。政策驅動 — 需 policy-mcp。"
+    },
+    {
+      "id": "stay_at_home_2020",
+      "name": "宅經濟(電商/筆電/網通/遊戲)",
+      "year": "2020",
+      "trigger_type": "News",
+      "trigger_event": "COVID 行為轉變 → 居家消費爆發",
+      "trigger_date": "2020-03-01",
+      "signal_sources_needed": ["news-zh", "news-intl", "data"],
+      "causal_tree": {
+        "tier_1": [
+          {"ticker": "8454", "name": "富邦媒", "lag_days": 30, "role": "電商"},
+          {"ticker": "2382", "name": "廣達", "lag_days": 30, "role": "筆電"},
+          {"ticker": "2324", "name": "仁寶", "lag_days": 30, "role": "筆電"},
+          {"ticker": "2345", "name": "智邦", "lag_days": 30, "role": "網通"},
+          {"ticker": "3293", "name": "鈊象", "lag_days": 30, "role": "遊戲"},
+          {"ticker": "9921", "name": "巨大", "lag_days": 60, "role": "單車"}
+        ],
+        "tier_2": [
+          {"ticker": "3037", "name": "欣興", "lag_days": 270, "role": "ABF 載板(筆電爆量)"},
+          {"ticker": "8046", "name": "南電", "lag_days": 270, "role": "ABF 載板"},
+          {"ticker": "3189", "name": "景碩", "lag_days": 270, "role": "ABF 載板"}
+        ],
+        "tier_3": [
+          {"ticker": "6435", "name": "大中", "lag_days": 360, "role": "MOSFET 缺貨"}
+        ]
+      },
+      "historical_analogue": [],
+      "outcome": "因果樹經典案例 — ABF 載板是宅經濟的孫子輩(2021 大爆發)",
+      "reviewer_verdict": "strong",
+      "notes": "示範多階效應跨時間軸。抓到口罩卻漏掉 ABF = 漏掉最大利多。"
+    },
+    {
+      "id": "abf_2021",
+      "name": "ABF 載板",
+      "year": "2021",
+      "trigger_type": "Data",
+      "trigger_event": "缺貨潮數據",
+      "trigger_date": "2021-01-01",
+      "signal_sources_needed": ["data", "roadmap"],
+      "causal_tree": {
+        "tier_1": [
+          {"ticker": "3037", "name": "欣興", "lag_days": null, "role": "ABF 載板"},
+          {"ticker": "8046", "name": "南電", "lag_days": null, "role": "ABF 載板"},
+          {"ticker": "3189", "name": "景碩", "lag_days": null, "role": "ABF 載板"}
+        ],
+        "tier_2": [],
+        "tier_3": []
+      },
+      "historical_analogue": [{"event": "宅經濟二階效應", "similarity": 0.8, "outcome": "見 stay_at_home_2020"}],
+      "outcome": "宅經濟二階效應總爆發",
+      "reviewer_verdict": "strong",
+      "notes": "table-level。為 stay_at_home_2020 的二階。"
+    },
+    {
+      "id": "silicon_wafer_2021",
+      "name": "矽晶圓",
+      "year": "2021",
+      "trigger_type": "Data",
+      "trigger_event": "半導體缺貨數據",
+      "trigger_date": "2021-01-01",
+      "signal_sources_needed": ["data", "roadmap"],
+      "causal_tree": {
+        "tier_1": [
+          {"ticker": "6488", "name": "環球晶", "lag_days": null, "role": "矽晶圓"},
+          {"ticker": "5483", "name": "中美晶", "lag_days": null, "role": "矽晶圓"}
+        ],
+        "tier_2": [],
+        "tier_3": []
+      },
+      "historical_analogue": [],
+      "outcome": "半導體缺貨總爆發",
+      "reviewer_verdict": "strong",
+      "notes": "table-level。"
+    },
+    {
+      "id": "steel_2021",
+      "name": "鋼鐵/中鋼",
+      "year": "2021",
+      "trigger_type": "Data",
+      "trigger_event": "中國限產 + 全球復甦(原物料數據)",
+      "trigger_date": "2021-01-01",
+      "signal_sources_needed": ["data"],
+      "causal_tree": {
+        "tier_1": [
+          {"ticker": "2002", "name": "中鋼", "lag_days": null, "role": "鋼鐵"},
+          {"ticker": "2014", "name": "中鴻", "lag_days": null, "role": "鋼鐵"}
+        ],
+        "tier_2": [],
+        "tier_3": []
+      },
+      "historical_analogue": [],
+      "outcome": "中國限產 + 全球復甦",
+      "reviewer_verdict": "strong",
+      "notes": "table-level。原物料數據驅動。"
+    },
+    {
+      "id": "ic_design_shortage_2021",
+      "name": "IC 設計缺貨潮",
+      "year": "2021",
+      "trigger_type": "Data",
+      "trigger_event": "半導體景氣高峰缺貨數據",
+      "trigger_date": "2021-01-01",
+      "signal_sources_needed": ["data", "roadmap"],
+      "causal_tree": {
+        "tier_1": [
+          {"ticker": "2454", "name": "聯發科", "lag_days": null, "role": "IC 設計"},
+          {"ticker": "2379", "name": "瑞昱", "lag_days": null, "role": "IC 設計"}
+        ],
+        "tier_2": [],
+        "tier_3": []
+      },
+      "historical_analogue": [],
+      "outcome": "半導體景氣高峰",
+      "reviewer_verdict": "strong",
+      "notes": "table-level。"
+    },
+    {
+      "id": "energy_2022",
+      "name": "能源/油氣",
+      "year": "2022",
+      "trigger_type": "News-International",
+      "trigger_event": "俄烏戰爭次階效應",
+      "trigger_date": "2022-02-24",
+      "signal_sources_needed": ["news-intl", "data"],
+      "causal_tree": {
+        "tier_1": [
+          {"ticker": "6505", "name": "台塑化", "lag_days": null, "role": "油氣"}
+        ],
+        "tier_2": [],
+        "tier_3": []
+      },
+      "historical_analogue": [{"event": "1990 波灣戰爭", "similarity": 0.7, "outcome": "油價飆漲"}],
+      "outcome": "俄烏戰爭次階效應",
+      "reviewer_verdict": "strong",
+      "notes": "table-level。為 defense_2022 的二階。"
+    },
+    {
+      "id": "cowos_2023",
+      "name": "CoWoS",
+      "year": "2023",
+      "trigger_type": "Roadmap",
+      "trigger_event": "AI 二階效應(法說會)",
+      "trigger_date": "2023-05-24",
+      "signal_sources_needed": ["roadmap"],
+      "causal_tree": {
+        "tier_1": [
+          {"ticker": "3131", "name": "弘塑", "lag_days": null, "role": "CoWoS 設備"},
+          {"ticker": "6187", "name": "萬潤", "lag_days": null, "role": "CoWoS 設備"}
+        ],
+        "tier_2": [],
+        "tier_3": []
+      },
+      "historical_analogue": [{"event": "AI 第一波二階", "similarity": 0.8, "outcome": "見 ai_first_wave_2023"}],
+      "outcome": "AI 二階效應",
+      "reviewer_verdict": "strong",
+      "notes": "table-level。為 ai_first_wave_2023 的二階。"
+    },
+    {
+      "id": "ai_cooling_2023",
+      "name": "AI 散熱",
+      "year": "2023",
+      "trigger_type": "Roadmap",
+      "trigger_event": "AI 規格升級(液冷)",
+      "trigger_date": "2023-06-01",
+      "signal_sources_needed": ["roadmap"],
+      "causal_tree": {
+        "tier_1": [
+          {"ticker": "3017", "name": "奇鋐", "lag_days": null, "role": "液冷散熱"},
+          {"ticker": "3324", "name": "雙鴻", "lag_days": null, "role": "液冷散熱"}
+        ],
+        "tier_2": [],
+        "tier_3": []
+      },
+      "historical_analogue": [{"event": "AI 第一波三階", "similarity": 0.8, "outcome": "見 ai_first_wave_2023"}],
+      "outcome": "AI 三階效應",
+      "reviewer_verdict": "strong",
+      "notes": "table-level。為 ai_first_wave_2023 的三階。"
+    },
+    {
+      "id": "bbu_2023",
+      "name": "BBU 電池備援",
+      "year": "2023",
+      "trigger_type": "Roadmap",
+      "trigger_event": "AI 規格升級",
+      "trigger_date": "2023-06-01",
+      "signal_sources_needed": ["roadmap"],
+      "causal_tree": {
+        "tier_1": [
+          {"ticker": "3211", "name": "順達", "lag_days": null, "role": "BBU"},
+          {"ticker": "6781", "name": "AES-KY", "lag_days": null, "role": "BBU"}
+        ],
+        "tier_2": [],
+        "tier_3": []
+      },
+      "historical_analogue": [{"event": "AI 第一波三階", "similarity": 0.8, "outcome": "見 ai_first_wave_2023"}],
+      "outcome": "AI 三階效應",
+      "reviewer_verdict": "strong",
+      "notes": "table-level。"
+    },
+    {
+      "id": "ai_main_2024",
+      "name": "AI 持續(鴻海登神)",
+      "year": "2024",
+      "trigger_type": "Roadmap",
+      "trigger_event": "AI 主升段(法說會)",
+      "trigger_date": "2024-01-01",
+      "signal_sources_needed": ["roadmap", "news-intl"],
+      "causal_tree": {
+        "tier_1": [
+          {"ticker": "2317", "name": "鴻海", "lag_days": null, "role": "AI 伺服器"},
+          {"ticker": "6669", "name": "緯穎", "lag_days": null, "role": "雲端伺服器"}
+        ],
+        "tier_2": [],
+        "tier_3": []
+      },
+      "historical_analogue": [{"event": "AI 第一波", "similarity": 0.9, "outcome": "見 ai_first_wave_2023"}],
+      "outcome": "AI 主升段",
+      "reviewer_verdict": "strong",
+      "notes": "table-level。"
+    },
+    {
+      "id": "heavy_electric_2024",
+      "name": "重電/電網",
+      "year": "2024",
+      "trigger_type": "Roadmap",
+      "trigger_event": "AI 用電需求",
+      "trigger_date": "2024-01-01",
+      "signal_sources_needed": ["roadmap", "data"],
+      "causal_tree": {
+        "tier_1": [
+          {"ticker": "1513", "name": "中興電", "lag_days": null, "role": "重電"},
+          {"ticker": "1519", "name": "華城", "lag_days": null, "role": "重電"}
+        ],
+        "tier_2": [],
+        "tier_3": []
+      },
+      "historical_analogue": [{"event": "AI 第一波四階", "similarity": 0.7, "outcome": "見 ai_first_wave_2023"}],
+      "outcome": "AI 四階效應(用電)",
+      "reviewer_verdict": "strong",
+      "notes": "table-level。AI 用電 → 電網投資。"
+    },
+    {
+      "id": "leo_satellite_2024",
+      "name": "低軌衛星",
+      "year": "2024",
+      "trigger_type": "News-International",
+      "trigger_event": "SpaceX 訪台、星鏈擴張",
+      "trigger_date": "2024-01-01",
+      "signal_sources_needed": ["news-intl", "roadmap"],
+      "causal_tree": {
+        "tier_1": [
+          {"ticker": "2313", "name": "華通", "lag_days": null, "role": "衛星 PCB"},
+          {"ticker": "3491", "name": "昇達科", "lag_days": null, "role": "衛星通訊"}
+        ],
+        "tier_2": [],
+        "tier_3": []
+      },
+      "historical_analogue": [],
+      "outcome": "SpaceX 訪台、星鏈擴張",
+      "reviewer_verdict": "watchlist",
+      "notes": "table-level。"
+    },
+    {
+      "id": "copper_cable_2024",
+      "name": "銅/電纜",
+      "year": "2024",
+      "trigger_type": "Data",
+      "trigger_event": "AI 用電 → 電網投資(原物料數據)",
+      "trigger_date": "2024-01-01",
+      "signal_sources_needed": ["data"],
+      "causal_tree": {
+        "tier_1": [
+          {"ticker": "1609", "name": "大亞", "lag_days": null, "role": "電纜"},
+          {"ticker": "1612", "name": "宏泰", "lag_days": null, "role": "電纜"}
+        ],
+        "tier_2": [],
+        "tier_3": []
+      },
+      "historical_analogue": [],
+      "outcome": "AI 用電 → 電網投資",
+      "reviewer_verdict": "strong",
+      "notes": "table-level。可由 LME 銅價 + AI 用電敘事觸發。"
+    },
+    {
+      "id": "robotics_2025",
+      "name": "機器人",
+      "year": "2025",
+      "trigger_type": "News-International",
+      "trigger_event": "NVIDIA GR00T、Tesla Optimus",
+      "trigger_date": "2025-01-01",
+      "signal_sources_needed": ["news-intl", "roadmap"],
+      "causal_tree": {
+        "tier_1": [
+          {"ticker": "6188", "name": "廣明", "lag_days": null, "role": "協作機器人"},
+          {"ticker": "2360", "name": "致茂", "lag_days": null, "role": "自動化測試"}
+        ],
+        "tier_2": [],
+        "tier_3": []
+      },
+      "historical_analogue": [],
+      "outcome": "NVIDIA GR00T、Tesla Optimus 帶動",
+      "reviewer_verdict": "watchlist",
+      "notes": "table-level。"
+    },
+    {
+      "id": "asic_2025",
+      "name": "ASIC(非 GPU 算力)",
+      "year": "2025",
+      "trigger_type": "Roadmap",
+      "trigger_event": "AI 算力第二曲線(法說會)",
+      "trigger_date": "2025-01-01",
+      "signal_sources_needed": ["roadmap"],
+      "causal_tree": {
+        "tier_1": [
+          {"ticker": "3661", "name": "世芯-KY", "lag_days": null, "role": "ASIC 設計"},
+          {"ticker": "3443", "name": "創意", "lag_days": null, "role": "ASIC 設計"}
+        ],
+        "tier_2": [],
+        "tier_3": []
+      },
+      "historical_analogue": [{"event": "AI 第一波二階", "similarity": 0.7, "outcome": "見 ai_first_wave_2023"}],
+      "outcome": "AI 算力第二曲線",
+      "reviewer_verdict": "strong",
+      "notes": "table-level。"
+    }
+  ]
+}
