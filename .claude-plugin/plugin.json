@@ -1,0 +1,12 @@
+{
+  "name": "polydig",
+  "version": "0.1.0",
+  "description": "PolyDig — leading-edge Taiwan-stock theme detection. Surfaces emerging themes before the market reacts, with causal-tree reasoning and historical analogues. Research assistant, not auto-trading.",
+  "author": {
+    "name": "Arthur",
+    "url": "https://github.com/jaylooloomi"
+  },
+  "homepage": "https://github.com/jaylooloomi/polydig",
+  "license": "MIT",
+  "keywords": ["taiwan-stocks", "finance", "research", "signals", "mcp"]
+}
