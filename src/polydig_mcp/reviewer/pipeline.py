@@ -7,6 +7,7 @@ calling the MCP tools; here we call the sensor tool functions in-process.
 from __future__ import annotations
 
 from datetime import date
+from pathlib import Path
 from typing import Any, Callable
 
 from polydig_mcp.history.store import ThemeStore
@@ -49,20 +50,88 @@ def run_daily(
     reviewer_mode: str = "dry",
     signal_provider: Callable[[], list[dict[str, Any]]] | None = None,
     report_date: date | None = None,
+    db_path: str | Path | None = None,
 ) -> dict[str, Any]:
-    """Run one daily cycle. Returns {signals, candidates, verdicts, report_md}."""
+    """Run one daily cycle. Returns {signals, candidates, verdicts, report_md}.
+
+    When *db_path* is provided, verdicts (including rejects as negative samples)
+    and missed_catch records are persisted to SQLite (spec §6.4).
+    """
     store = store or ThemeStore()
     signals = (signal_provider or collect_signals)()
     candidates = signals_to_candidates(signals)
 
     verdicts = [review(c, store, mode=reviewer_mode) for c in candidates]
 
-    missed = [
-        {"industry": c["theme_hint"].replace("族群漲停潮", ""), "members": c["raw_signals"][0]["content"].get("clusters", {})}
-        for c in candidates
-        if c.get("is_safety_net")
+    safety_net_candidates = [c for c in candidates if c.get("is_safety_net")]
+
+    def _flatten_members(clusters: dict | list) -> list[dict[str, Any]]:
+        """Flatten a clusters dict (industry -> [members]) into a flat list."""
+        if isinstance(clusters, list):
+            return clusters
+        out: list[dict[str, Any]] = []
+        for members in clusters.values():
+            if isinstance(members, list):
+                out.extend(members)
+        return out
+
+    missed: list[dict[str, Any]] = [
+        {
+            "industry": c["theme_hint"].replace("族群漲停潮", ""),
+            "members": _flatten_members(c["raw_signals"][0]["content"].get("clusters", {})),
+        }
+        for c in safety_net_candidates
     ]
-    report_md = generate_report(verdicts, report_date=report_date)
+
+    # ── persist to SQLite if db_path given ───────────────────────────────────
+    if db_path is not None:
+        try:
+            from polydig_mcp.storage.db import PolyDigDB
+
+            db = PolyDigDB(db_path)
+            date_str = (report_date or date.today()).isoformat()
+
+            # Persist all signals
+            for sig in signals:
+                if "error" not in sig.get("content", {}):
+                    try:
+                        db.insert_signal(sig)
+                    except Exception:  # noqa: BLE001
+                        pass
+
+            # Persist all verdicts (rejects = negative samples)
+            for v in verdicts:
+                try:
+                    db.insert_verdict(v, report_date=date_str)
+                except Exception:  # noqa: BLE001
+                    pass
+
+            # Run backfill + persist missed_catch
+            if safety_net_candidates:
+                try:
+                    from polydig_mcp.reviewer.backfill import run_backfill
+
+                    enriched_missed: list[dict[str, Any]] = []
+                    for c in safety_net_candidates:
+                        industry = c["theme_hint"].replace("族群漲停潮", "")
+                        members_raw = c["raw_signals"][0]["content"].get("clusters", {})
+                        members_list = list(members_raw.values())[0] if members_raw else []
+                        findings = run_backfill(industry, members_list, db)
+                        db.insert_missed_catch(industry, members_list, findings, date_str)
+                        enriched_missed.append({
+                            "industry": industry,
+                            "members": members_list,
+                            "backfill": findings,
+                        })
+                    missed = enriched_missed  # replace with enriched version
+                except Exception:  # noqa: BLE001
+                    pass  # backfill failure must not abort the run
+
+            db.close()
+        except Exception:  # noqa: BLE001
+            pass  # storage failure must not abort the run
+
+    report_md = generate_report(verdicts, report_date=report_date, missed_clusters=missed or None)
 
     return {
         "signals": signals,
