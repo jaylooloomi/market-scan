@@ -46,10 +46,19 @@ def main() -> int:
     print(f"get_shipping_index: score={r['anomaly_score']} reason={c.get('reason')}")
     assert "error" not in c and r["anomaly_score"] >= 0.7
 
-    # Empty index → graceful error, not crash
-    empty = d.get_shipping_index("BDI", db_path=tempfile.mktemp(suffix=".db"))
+    # Empty unmapped index → graceful error, not crash
+    empty = d.get_shipping_index("SCFI", db_path=tempfile.mktemp(suffix=".db"))
     assert "error" in empty["content"]
-    print("empty BDI: graceful error ✓")
+    print("empty SCFI (no auto-source): graceful error ✓")
+
+    # Live: BDI auto-scrapes East Money (best-effort — skip cleanly if offline)
+    try:
+        from polydig_mcp.data.shipping import fetch_eastmoney_index
+        live = fetch_eastmoney_index("BDI", limit=20)
+        print(f"live East Money BDI: {len(live)} points, latest={live[-1]}")
+        assert len(live) >= 3 and live[-1][1] > 0
+    except Exception as e:  # noqa: BLE001 — network-dependent, don't fail the suite
+        print(f"live BDI fetch skipped (network?): {e}")
 
     print("=== PASS ===")
     return 0

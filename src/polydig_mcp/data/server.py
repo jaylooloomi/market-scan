@@ -149,9 +149,18 @@ def get_shipping_index(index: str = "SCFI", days: int = 180, db_path: str | None
     (no keyless SCFI/BDI feed — see ingest_shipping_index).
     """
     try:
-        from polydig_mcp.data.shipping import detect_index_anomaly
+        from polydig_mcp.data.shipping import (
+            EASTMONEY_INDICATORS, detect_index_anomaly, fetch_eastmoney_index,
+        )
         from polydig_mcp.storage.db import PolyDigDB
         db = PolyDigDB(_db_path(db_path))
+        # Auto-scrape from East Money (free, has history) where available; persist.
+        if index.upper() in EASTMONEY_INDICATORS:
+            try:
+                for dd, vv in fetch_eastmoney_index(index.upper()):
+                    db.upsert_index_value(index.upper(), dd, vv, "eastmoney")
+            except SensorError:
+                pass  # fall back to whatever is already stored
         series = db.index_series(index.upper(), lookback_days=days)
         db.close()
     except Exception as e:  # noqa: BLE001
@@ -160,8 +169,8 @@ def get_shipping_index(index: str = "SCFI", days: int = 180, db_path: str | None
     if not series:
         return error_signal(
             "data.shipping", "shipping_index",
-            f"no stored history for {index.upper()} — feed via ingest_shipping_index "
-            "(SCFI/BDI have no keyless live feed: sse.net.cn login-gated, Baltic paywalled)",
+            f"no data for {index.upper()} — East Money auto-scrape returned nothing and no "
+            "stored history. SCFI(container) is login-gated; feed via ingest_shipping_index.",
             index=index.upper(),
         )
 
@@ -172,7 +181,7 @@ def get_shipping_index(index: str = "SCFI", days: int = 180, db_path: str | None
         source="data.shipping",
         signal_type="shipping_index",
         content=result,
-        raw_url="https://en.sse.net.cn/indices/scfinew.jsp",
+        raw_url="https://data.eastmoney.com/cjsj/hyzs_EMI00107664.html",
         anomaly_score=result.get("anomaly_score"),
     ).to_dict()
 

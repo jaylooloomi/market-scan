@@ -20,6 +20,47 @@ from __future__ import annotations
 import statistics
 from typing import Any
 
+from polydig_mcp.common.errors import SensorError
+from polydig_mcp.common.http import polite_get
+
+# East Money (东方财富) datacenter — free JSON API with date+value history.
+# BDI confirmed working (EMI00107664). SCFI (container) has no confirmed keyless
+# id yet → feed via ingest_shipping_index.
+_EASTMONEY_API = "https://datacenter-web.eastmoney.com/api/data/v1/get"
+EASTMONEY_INDICATORS = {
+    "BDI": "EMI00107664",   # 波羅的海乾散貨指數 (dry bulk — 慧洋/裕民)
+}
+
+
+def fetch_eastmoney_index(name: str, limit: int = 120) -> list[tuple[str, float]]:
+    """Fetch [(date, value)] history for a freight index from East Money (free).
+
+    Raises SensorError if the index isn't mapped or the API fails.
+    """
+    ind_id = EASTMONEY_INDICATORS.get(name.upper())
+    if not ind_id:
+        raise SensorError("unknown_index", f"{name} has no East Money id (try ingest_shipping_index)")
+    params = {
+        "reportName": "RPT_INDUSTRY_INDEX",
+        "columns": "REPORT_DATE,INDICATOR_VALUE",
+        "filter": f'(INDICATOR_ID="{ind_id}")',
+        "pageSize": str(limit),
+        "sortColumns": "REPORT_DATE",
+        "sortTypes": "-1",
+    }
+    resp = polite_get(_EASTMONEY_API, params=params)
+    rows = ((resp.json() or {}).get("result") or {}).get("data") or []
+    series: list[tuple[str, float]] = []
+    for r in rows:
+        d = (r.get("REPORT_DATE") or "")[:10]
+        v = r.get("INDICATOR_VALUE")
+        if d and v is not None:
+            series.append((d, float(v)))
+    if not series:
+        raise SensorError("fetch_failed", f"East Money returned no data for {name}")
+    series.sort(key=lambda x: x[0])  # ascending
+    return series
+
 
 def detect_index_anomaly(
     series: list[tuple[str, float]],
