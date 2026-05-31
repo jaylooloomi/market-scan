@@ -167,6 +167,7 @@ def detect_news_anomaly(
             "prior_count": s["prior_count"],
             "spike_ratio": s["spike_ratio"],
             "window_days": window_days,
+            "article_urls": s.get("article_urls", []),
         }
         if cross_week_ratio is not None:
             content["cross_week_ratio"] = round(cross_week_ratio, 2)

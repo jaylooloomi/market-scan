@@ -61,8 +61,76 @@ _EN_STOP = {
     "will", "has", "have", "new", "says", "after", "over", "up", "down", "amid",
 }
 _TOKEN_RE = re.compile(r"[A-Za-z][A-Za-z0-9'\-]{2,}")
-# CJK 2-4 char chunks as crude "terms"
+# Fallback CJK 2-4 char chunks (used only if jieba is unavailable)
 _CJK_RE = re.compile(r"[一-鿿]{2,4}")
+
+# jieba POS tags worth keeping (nouns + proper nouns + foreign words).
+# Drop nr (person names — reporter bylines etc.) and verbs/particles → kills the
+# cross-boundary junk the old bigram tokenizer produced.
+_KEEP_POS = {"n", "ns", "nt", "nz", "nl", "eng"}
+# Common Chinese finance-noise terms to drop even if tagged as nouns.
+_ZH_STOP = {
+    "公司", "表示", "指出", "今天", "今日", "昨天", "國際", "億元", "萬元", "美元",
+    "台幣", "市場", "投資", "營收", "業績", "股價", "預期", "消息", "報導", "新聞",
+    "記者", "目前", "未來", "持續", "相關", "方面", "部分", "問題", "影響", "可能",
+}
+
+
+# Domain terms jieba's default dict doesn't know (would get fragmented, e.g.
+# 矽光子 → 矽+光子). Stocks themes live in the history DB; we also curate a core set.
+_CORE_DOMAIN_TERMS = [
+    "矽光子", "光通訊", "光模組", "光學引擎", "CPO", "CoWoS", "SoIC", "先進封裝",
+    "載板", "ABF", "散熱", "液冷", "重電", "電網", "銅纜", "電纜", "機器人",
+    "低軌衛星", "衛星", "半導體", "矽晶圓", "航運", "貨櫃", "散裝", "塞港", "缺櫃",
+    "國防", "無人機", "軍工", "疫苗", "口罩", "不織布", "熔噴布", "防疫",
+    "BBU", "電池備援", "ASIC", "矽智財", "記憶體", "伺服器", "高速網路",
+    "化肥", "尿素", "鋼鐵", "原物料", "宅經濟", "電商", "筆電", "網通",
+]
+_userdict_loaded = False
+
+
+def _ensure_userdict() -> None:
+    """Teach jieba domain terms once (curated + theme names/roles from history DB)."""
+    global _userdict_loaded
+    if _userdict_loaded:
+        return
+    try:
+        import jieba
+
+        words = set(_CORE_DOMAIN_TERMS)
+        try:
+            from polydig_mcp.history.store import load_themes
+            for t in load_themes():
+                words.add(t.get("name", "").split("(")[0].split("/")[0].strip())
+                for tier in t.get("causal_tree", {}).values():
+                    for m in tier:
+                        if m.get("role"):
+                            words.add(m["role"].split("(")[0].split("→")[0].strip())
+        except Exception:  # noqa: BLE001
+            pass
+        for w in words:
+            if w and len(w) >= 2:
+                jieba.add_word(w, tag="nz")  # tag so posseg keeps it (nz ∈ _KEEP_POS)
+    except Exception:  # noqa: BLE001
+        pass
+    _userdict_loaded = True
+
+
+def _jieba_terms(text: str) -> list[str] | None:
+    """POS-filtered jieba tokens; None if jieba unavailable (caller falls back)."""
+    try:
+        import jieba.posseg as pseg
+    except Exception:  # noqa: BLE001
+        return None
+    _ensure_userdict()
+    out: list[str] = []
+    for w, flag in pseg.cut(text):
+        w = w.strip()
+        if len(w) < 2 or w in _ZH_STOP:
+            continue
+        if flag in _KEEP_POS or flag.startswith("nz"):
+            out.append(w)
+    return out
 
 
 def _entry_time(entry: Any) -> datetime | None:
@@ -102,7 +170,10 @@ def fetch_feed(feed: Feed) -> list[dict[str, Any]]:
 def _terms(text: str, lang: str) -> list[str]:
     text = text or ""
     if lang == "zh":
-        return _CJK_RE.findall(text)
+        jt = _jieba_terms(text)
+        if jt is not None:
+            return jt
+        return _CJK_RE.findall(text)  # fallback if jieba missing
     return [t.lower() for t in _TOKEN_RE.findall(text) if t.lower() not in _EN_STOP]
 
 
@@ -121,15 +192,18 @@ def detect_term_spikes(
     now = datetime.now(timezone.utc)
     recent: Counter = Counter()
     older: Counter = Counter()
-    recent_links: dict[str, str | None] = {}
+    recent_links: dict[str, list[str]] = {}  # term -> up to 3 distinct article links
 
     for it in items:
         dt = it.get("_dt")
         bucket = recent if (dt is None or (now - dt).total_seconds() <= window_days * 86400) else older
         for term in _terms(f"{it['title']} {it['summary']}", it["lang"]):
             bucket[term] += 1
-            if bucket is recent and term not in recent_links:
-                recent_links[term] = it.get("link")
+            if bucket is recent:
+                link = it.get("link")
+                links = recent_links.setdefault(term, [])
+                if link and link not in links and len(links) < 3:
+                    links.append(link)
 
     spikes = []
     for term, rc in recent.items():
@@ -140,6 +214,7 @@ def detect_term_spikes(
         ratio = rc / (oc + 1)
         # squash into 0..1 anomaly score
         score = min(1.0, ratio / 5.0)
+        links = recent_links.get(term, [])
         spikes.append(
             {
                 "term": term,
@@ -147,7 +222,8 @@ def detect_term_spikes(
                 "prior_count": oc,
                 "spike_ratio": round(ratio, 2),
                 "anomaly_score": round(score, 3),
-                "example_url": recent_links.get(term),
+                "example_url": links[0] if links else None,
+                "article_urls": links,
             }
         )
     spikes.sort(key=lambda s: s["anomaly_score"], reverse=True)

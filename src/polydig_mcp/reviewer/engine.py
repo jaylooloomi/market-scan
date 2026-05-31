@@ -42,18 +42,22 @@ def _extract_sources(candidate: dict[str, Any]) -> list[dict[str, Any]]:
     out: list[dict[str, Any]] = []
     for sig in candidate.get("raw_signals", []):
         content = sig.get("content", {})
+        src = sig.get("source", "?")
+        stype = sig.get("signal_type", "?")
+        # News anomalies carry up to 3 article links — surface them all.
+        article_urls = content.get("article_urls") or []
+        if article_urls:
+            for u in article_urls:
+                out.append({"source": src, "signal_type": stype, "url": u})
+            continue
         url = sig.get("raw_url")
         if not url:
             fred = content.get("fred_series")
             if fred:
                 url = f"https://fred.stlouisfed.org/series/{fred}"
-            elif sig.get("signal_type") == "limit_up_cluster":
+            elif stype == "limit_up_cluster":
                 url = "https://openapi.twse.com.tw/v1/exchangeReport/STOCK_DAY_ALL"
-        out.append({
-            "source": sig.get("source", "?"),
-            "signal_type": sig.get("signal_type", "?"),
-            "url": url,
-        })
+        out.append({"source": src, "signal_type": stype, "url": url})
     return out
 
 
