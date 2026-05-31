@@ -93,6 +93,8 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--demo", action="store_true",
                    help="Offline demo: uses canned signals — no network, no FinMind token needed")
     p.add_argument("--db", default=None, help="SQLite db path (enables signal/verdict persistence)")
+    p.add_argument("--telegram", action="store_true",
+                   help="Also push the report to Telegram (needs TELEGRAM_BOT_TOKEN/CHAT_ID in .env)")
     args = p.parse_args(argv)
 
     try:
@@ -123,6 +125,15 @@ def main(argv: list[str] | None = None) -> int:
     print(f"candidates: {len(result['candidates'])}, verdicts: {len(result['verdicts'])}", file=sys.stderr)
     print(f"report written: {path}")
     print(f"latest: {latest}")
+
+    if args.telegram:
+        from polydig_mcp.reporting.telegram import send_message
+        header = f"📊 PolyDig 每日台股題材報告 {date.today().isoformat()}\n\n"
+        res = send_message(header + result["report_md"])
+        if res["ok"]:
+            print(f"telegram: sent {res['sent']}/{res['chunks']} message(s)")
+        else:
+            print(f"telegram: FAILED — {res['error']}", file=sys.stderr)
     return 0
 
 

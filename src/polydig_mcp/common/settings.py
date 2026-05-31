@@ -28,10 +28,16 @@ class Settings:
     finmind_token: str | None
     http_timeout: float
     user_agent: str
+    telegram_bot_token: str | None
+    telegram_chat_id: str | None
 
     @property
     def has_finmind(self) -> bool:
         return bool(self.finmind_token)
+
+    @property
+    def has_telegram(self) -> bool:
+        return bool(self.telegram_bot_token and self.telegram_chat_id)
 
 
 @lru_cache(maxsize=1)
@@ -46,4 +52,6 @@ def get_settings() -> Settings:
             "POLYDIG_USER_AGENT",
             "PolyDig/0.1 (+https://github.com/jaylooloomi/polydig) research-assistant",
         ),
+        telegram_bot_token=os.getenv("TELEGRAM_BOT_TOKEN"),
+        telegram_chat_id=os.getenv("TELEGRAM_CHAT_ID"),
     )

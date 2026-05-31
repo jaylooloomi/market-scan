@@ -54,6 +54,8 @@ config/local.json
 *.sqlite3
 # ralph-loop session state (local only)
 .claude/ralph-loop.local.md
+# transient Telegram summary scratch file
+reports/_tg_summary.txt
 # Note: /reports/ is INTENTIONALLY tracked — each run is a meaningful artifact
 # (Phase 0 validation, future daily research reports, etc.)
 
