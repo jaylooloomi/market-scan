@@ -51,14 +51,16 @@ def main() -> int:
     assert "error" in empty["content"]
     print("empty SCFI (no auto-source): graceful error ✓")
 
-    # Live: BDI auto-scrapes East Money (best-effort — skip cleanly if offline)
+    # Live: the free dry-bulk freight complex auto-scrapes East Money
+    # (best-effort — skip cleanly if offline). Container SCFI is login-gated → ingest only.
     try:
-        from polydig_mcp.data.shipping import fetch_eastmoney_index
-        live = fetch_eastmoney_index("BDI", limit=20)
-        print(f"live East Money BDI: {len(live)} points, latest={live[-1]}")
-        assert len(live) >= 3 and live[-1][1] > 0
+        from polydig_mcp.data.shipping import EASTMONEY_INDICATORS, fetch_eastmoney_index
+        for idx in EASTMONEY_INDICATORS:
+            live = fetch_eastmoney_index(idx, limit=10)
+            print(f"live East Money {idx}: {len(live)} points, latest={live[-1]}")
+            assert len(live) >= 3 and live[-1][1] > 0
     except Exception as e:  # noqa: BLE001 — network-dependent, don't fail the suite
-        print(f"live BDI fetch skipped (network?): {e}")
+        print(f"live dry-bulk fetch skipped (network?): {e}")
 
     print("=== PASS ===")
     return 0

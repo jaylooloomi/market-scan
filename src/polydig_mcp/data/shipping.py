@@ -24,11 +24,15 @@ from polydig_mcp.common.errors import SensorError
 from polydig_mcp.common.http import polite_get
 
 # East Money (东方财富) datacenter — free JSON API with date+value history.
-# BDI confirmed working (EMI00107664). SCFI (container) has no confirmed keyless
-# id yet → feed via ingest_shipping_index.
+# Free dry-bulk freight complex (all confirmed). Container (SCFI/CCFI) has NO
+# keyless source — sse.net.cn login-gated, MacroMicro behind Cloudflare,
+# Freightos/sina/cnyes no clean API — so SCFI uses ingest_shipping_index.
 _EASTMONEY_API = "https://datacenter-web.eastmoney.com/api/data/v1/get"
 EASTMONEY_INDICATORS = {
-    "BDI": "EMI00107664",   # 波羅的海乾散貨指數 (dry bulk — 慧洋/裕民)
+    "BDI": "EMI00107664",   # 波羅的海乾散貨綜合指數 (dry bulk — 慧洋/裕民/新興)
+    "BPI": "EMI00107665",   # 巴拿馬型運費指數
+    "BCI": "EMI00107666",   # 海岬型運費指數
+    "BSI": "EMI00107667",   # 超靈便型船運價指數
 }
 
 
