@@ -90,11 +90,28 @@ def generate_report(
     if missed_clusters:
         out.append("## ⚠️ 漏抓案例(Price safety-net 觸發)")
         out.append("")
-        out.append("以下族群已出現漲停潮,代表領先感測器可能漏抓,建議回溯檢視:")
+        out.append("以下族群已出現漲停潮(領先感測器可能漏抓)。系統已自動回溯近 90 天訊號:")
         out.append("")
+        _concl_label = {
+            "found_leading_signals": "🔁 回溯找到前期訊號(漏抓)",
+            "no_fundamental_basis": "🎲 回溯無對應訊號(疑純散戶)",
+        }
         for c in missed_clusters:
             members = "、".join(m.get("name", m.get("code", "?")) for m in c.get("members", []))
             out.append(f"- **{c.get('industry', '?')}**({len(c.get('members', []))} 檔)：{members}")
+            bf = c.get("backfill")
+            if bf:
+                label = _concl_label.get(bf.get("conclusion"), bf.get("conclusion", ""))
+                out.append(f"  - **回溯結論**:{label}")
+                if bf.get("reason_missed"):
+                    out.append(f"    - {bf['reason_missed']}")
+                for ls in bf.get("leading_signals", [])[:3]:
+                    out.append(
+                        f"    - 前期訊號:`{ls.get('source')}` @ {ls.get('timestamp','')[:10]} "
+                        f"(score {ls.get('anomaly_score')}, 命中 {','.join(ls.get('matched_tokens', [])[:5])})"
+                    )
+            else:
+                out.append("  - 回溯:未啟用(需以 --db 執行才會自動回溯)")
         out.append("")
 
     return "\n".join(out)
