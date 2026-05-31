@@ -81,3 +81,57 @@ def commodity_price(commodity: str, days: int = 60) -> dict[str, Any]:
 def shipping_index(index: str = "BDI", days: int = 60) -> dict[str, Any]:
     """No keyless SCFI/BDI feed — return structured not_implemented (honest)."""
     raise SensorError("not_implemented", SHIPPING_NOTE)
+
+
+# ── US sector → TW family mapping (spec §4.2 item 5) ────────────────────────
+# Maps a US sector signal to the relevant TW theme families.
+# Each family key matches a theme id or family keyword in themes.json.
+US_TW_MAPPING: dict[str, list[str]] = {
+    "nasdaq":        ["ai_first_wave_2023", "ai_main_2024", "silicon_photonics_2024"],
+    "phlx_semi":     ["ai_first_wave_2023", "silicon_photonics_2024", "silicon_wafer_2021"],
+    "sp500":         ["ai_first_wave_2023"],
+    "us_10y":        ["defense_2022"],  # rising yields → defensive/energy
+    "vix":           ["defense_2022"],  # VIX spike → geopolitical risk
+}
+
+# Strong move threshold: |pct_change| >= this triggers a TW candidate
+US_STRONG_MOVE_THRESHOLD = 0.05  # 5 %
+
+# ── US sector proxies (FRED keyless) ────────────────────────────────────────
+# Mapping: friendly name -> FRED series id (daily)
+US_SECTOR_SERIES: dict[str, str] = {
+    "nasdaq":        "NASDAQCOM",    # NASDAQ Composite Index (daily)
+    "sp500":         "SP500",         # S&P 500 Index (daily)
+    "phlx_semi":     "PHLXSEMID",    # PHLX Semiconductor Sector Index (daily)
+    "us_10y":        "DGS10",         # 10-Year Treasury yield (daily)
+    "vix":           "VIXCLS",        # CBOE VIX volatility (daily)
+}
+
+
+def us_sector_move(sector: str = "nasdaq", days: int = 30) -> dict[str, Any]:
+    """Fetch a US sector/index % change from FRED (no API key required).
+
+    Returns pct_change over the requested period, latest value, and metadata.
+    Uses the same requests-based FRED CSV endpoint as commodity_price() —
+    no curl_cffi, safe for MCP stdio transport.
+    """
+    key = sector.lower()
+    if key not in US_SECTOR_SERIES:
+        raise SensorError(
+            "unknown_sector",
+            f"'{sector}' not mapped. Known: {', '.join(sorted(US_SECTOR_SERIES))}.",
+        )
+    series = _fred_series(US_SECTOR_SERIES[key], days)
+    if len(series) < 2:
+        raise SensorError("fetch_failed", f"FRED returned insufficient data for US sector {sector}")
+    first_v, last_v = series[0][1], series[-1][1]
+    pct = (last_v / first_v - 1.0) if first_v else None
+    return {
+        "sector": key,
+        "fred_series": US_SECTOR_SERIES[key],
+        "latest": round(last_v, 4),
+        "period_start": round(first_v, 4),
+        "pct_change": round(pct, 4) if pct is not None else None,
+        "days": days,
+        "as_of": series[-1][0].isoformat(),
+    }

@@ -5,6 +5,7 @@ Tools:
     get_institutional_flow(stock_id, days)               -> 三大法人買賣超
     get_commodity_price(commodity, days)                 -> commodity futures
     get_shipping_index(index, days)                      -> freight index (proxy)
+    get_us_sector_move(sector, days)                     -> US sector % change (FRED keyless)
     get_dram_price()                                     -> STUB (paywalled)
     list_datasets()                                      -> available helpers
 """
@@ -119,6 +120,29 @@ def get_shipping_index(index: str = "BDI", days: int = 60) -> dict[str, Any]:
         source="data.shipping",
         signal_type="shipping_index",
         content=data,
+        anomaly_score=round(score, 3) if score is not None else None,
+    ).to_dict()
+
+
+@mcp.tool()
+def get_us_sector_move(sector: str = "nasdaq", days: int = 30) -> dict[str, Any]:
+    """US sector / index % change (FRED keyless, requests-based, stdio-safe).
+
+    sector: nasdaq | sp500 | phlx_semi | us_10y | vix
+    Returns the % change over the period plus the TW family mapping
+    (so Scout can translate a strong US move to a TW candidate theme).
+    """
+    try:
+        data = macro.us_sector_move(sector, days)
+    except SensorError as e:
+        return error_signal("data.us_sector", "us_sector_move", e.message, sector=sector)
+    pct = data.get("pct_change")
+    score = min(1.0, abs(pct) * 3) if pct is not None else None
+    tw_families = macro.US_TW_MAPPING.get(sector.lower(), [])
+    return Signal(
+        source="data.us_sector",
+        signal_type="us_sector_move",
+        content={**data, "tw_theme_families": tw_families},
         anomaly_score=round(score, 3) if score is not None else None,
     ).to_dict()
 
