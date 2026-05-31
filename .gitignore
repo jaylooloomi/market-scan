@@ -47,12 +47,13 @@ config/local.json
 # PolyDig runtime artifacts
 /data/cache/
 /data/raw/
-/reports/
 /vector_db/
 /chroma_db/
 *.db
 *.sqlite
 *.sqlite3
+# Note: /reports/ is INTENTIONALLY tracked — each run is a meaningful artifact
+# (Phase 0 validation, future daily research reports, etc.)
 
 # Logs
 *.log

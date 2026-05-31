@@ -1,0 +1,108 @@
+{
+  "metadata": {
+    "version": "0.1",
+    "created": "2026-05-31",
+    "description": "PolyDig Phase 0 — Leading Edge Validator test cases. 5 historical themes x 3 trigger dates each = 15 test points."
+  },
+  "thresholds": {
+    "_comment": "Classify across multiple post-trigger windows (30/90/180 days). A signal passes if ANY window beats the threshold — many themes are slow-burn and need T+90 or T+180 to materialize (AI 2022/11, defense 2022/02 etc.)",
+    "strong_leading": {
+      "pre_max_excess": 0.10,
+      "post30_min_excess": 0.30,
+      "post90_min_excess": 0.50,
+      "post180_min_excess": 0.80
+    },
+    "weak_leading": {
+      "pre_max_excess": 0.30,
+      "post30_min_excess": 0.10,
+      "post90_min_excess": 0.20,
+      "post180_min_excess": 0.15
+    },
+    "too_late_pre_excess": 0.30,
+    "null_post180_max_excess": 0.10
+  },
+  "windows": {
+    "pre_days": 90,
+    "post_days": [7, 30, 90, 180]
+  },
+  "baseline": {
+    "symbol": "^TWII",
+    "name": "TAIEX"
+  },
+  "cases": [
+    {
+      "id": "mask",
+      "name": "口罩/防疫股",
+      "trigger_type": "News",
+      "triggers": [
+        {"label": "early", "date": "2019-12-31", "description": "武漢通報不明肺炎 27 例"},
+        {"label": "mid", "date": "2020-01-20", "description": "鍾南山證實人傳人"},
+        {"label": "late", "date": "2020-01-24", "description": "台灣政府禁口罩出口"}
+      ],
+      "tickers": [
+        {"symbol": "9919.TW", "name": "康那香"},
+        {"symbol": "1325.TW", "name": "恆大"},
+        {"symbol": "6504.TW", "name": "南六"}
+      ]
+    },
+    {
+      "id": "shipping",
+      "name": "貨櫃航運",
+      "trigger_type": "Data",
+      "triggers": [
+        {"label": "early", "date": "2020-06-15", "description": "SCFI 指數從 ~900 開始起漲"},
+        {"label": "mid", "date": "2020-12-15", "description": "中國缺櫃新聞首見主流媒體"},
+        {"label": "late", "date": "2021-03-23", "description": "長賜輪卡蘇伊士運河"}
+      ],
+      "tickers": [
+        {"symbol": "2603.TW", "name": "長榮"},
+        {"symbol": "2609.TW", "name": "陽明"},
+        {"symbol": "2615.TW", "name": "萬海"}
+      ]
+    },
+    {
+      "id": "ai",
+      "name": "AI 概念股第一波",
+      "trigger_type": "News-International",
+      "triggers": [
+        {"label": "early", "date": "2022-11-30", "description": "ChatGPT 上線"},
+        {"label": "mid", "date": "2023-02-07", "description": "微軟整合 Bing+ChatGPT"},
+        {"label": "late", "date": "2023-05-24", "description": "NVIDIA Q1 財報暴擊"}
+      ],
+      "tickers": [
+        {"symbol": "3231.TW", "name": "緯創"},
+        {"symbol": "2382.TW", "name": "廣達"},
+        {"symbol": "2376.TW", "name": "技嘉"}
+      ]
+    },
+    {
+      "id": "defense",
+      "name": "國防/俄烏戰爭",
+      "trigger_type": "News-Sudden",
+      "triggers": [
+        {"label": "early", "date": "2021-11-15", "description": "俄烏邊境部隊集結密集報導"},
+        {"label": "mid", "date": "2022-02-21", "description": "普丁承認頓巴斯兩共和國"},
+        {"label": "late", "date": "2022-02-24", "description": "俄羅斯全面入侵烏克蘭"}
+      ],
+      "tickers": [
+        {"symbol": "2634.TW", "name": "漢翔"},
+        {"symbol": "8033.TW", "name": "雷虎"}
+      ]
+    },
+    {
+      "id": "silicon_photonics",
+      "name": "矽光子/CPO",
+      "trigger_type": "Roadmap",
+      "triggers": [
+        {"label": "early", "date": "2023-03-21", "description": "NVIDIA GTC 提及 CPO 路線圖"},
+        {"label": "mid", "date": "2024-09-04", "description": "SEMI 矽光子產業聯盟成立"},
+        {"label": "late", "date": "2025-01-16", "description": "TSMC Q4 法說會確認 2026 量產"}
+      ],
+      "tickers": [
+        {"symbol": "3163.TWO", "name": "波若威 (TPEx)"},
+        {"symbol": "4979.TWO", "name": "華星光 (TPEx)"},
+        {"symbol": "4977.TW", "name": "眾達-KY (TWSE)"}
+      ]
+    }
+  ]
+}

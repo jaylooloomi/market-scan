@@ -1,0 +1,21 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "polydig-validator"
+version = "0.1.0"
+description = "PolyDig Phase 0 — Leading Edge Validator for stock theme detection"
+authors = [{name = "Arthur", email = "arthurwang@think4u-tech.com"}]
+requires-python = ">=3.11"
+dependencies = [
+    "pandas>=2.0",
+    "yfinance>=0.2",
+    "requests>=2.31",
+]
+
+[project.scripts]
+polydig-validator = "polydig_validator.cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/polydig_validator"]
