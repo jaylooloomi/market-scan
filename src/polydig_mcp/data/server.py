@@ -244,6 +244,33 @@ def get_dram_price() -> dict[str, Any]:
     return data
 
 
+@mcp.tool()
+def get_crash_watch(days: int = 120, threshold: int = 2) -> dict[str, Any]:
+    """Risk-off confluence from FRED structural-stress indicators — DOWNSIDE sensor.
+
+    Watches the yield curve (T10Y3M), HY credit spread (BAMLH0A0HYM2) and VIX
+    (VIXCLS), all keyless FRED. Fires `risk_off` only when >= `threshold` indicators
+    are stressed at once (deliberately high bar to suppress false positives — e.g.
+    the 2022-23 inversion that produced no recession). This is a **de-risk CAUTION
+    signal, NOT a crash predictor**; `threshold` needs out-of-sample calibration.
+    See docs/research/02-crash-precursors.md.
+    """
+    try:
+        from polydig_mcp.data.crashwatch import crash_watch_signal
+        data = crash_watch_signal(days=days, threshold=threshold)
+    except SensorError as e:
+        return error_signal("data.crashwatch", "risk_off_confluence", e.message)
+    except Exception as e:  # noqa: BLE001
+        return error_signal("data.crashwatch", "risk_off_confluence", str(e))
+    return Signal(
+        source="data.crashwatch",
+        signal_type="risk_off_confluence",
+        content=data,
+        raw_url="https://fred.stlouisfed.org/series/T10Y3M",
+        anomaly_score=data.get("score"),
+    ).to_dict()
+
+
 def main() -> None:
     mcp.run("stdio")
 
