@@ -106,3 +106,22 @@ EV(訊號) = 命中率 × 平均報酬(net) − (1−命中率) × 平均虧損(
 | 🟡 EV「命中率」分母未定義;regime 應上移;進場分批未給最早點;Sharpe 無算法 | §1/§2/§3 補上 |
 | ➕ 最大回撤路徑風險、題材共線、多重比較(45 檢定)、look-ahead、流動性非線性、出場非對稱 | §3/§4 補上 |
 | 整體:gross 數字旁警示不足 | 全文逐處加註 + P0 要求算 net 下限 |
+
+---
+
+## 第二輪 review(v3,自審 + 實作進度同步)
+
+**評分:A−**(v2 把過度宣稱都修了;§6 的 P0「算最保守 net alpha + 出場回測」本 session 已實作,文件應補上真實數字)。
+
+**✅ 自 v2 後已實作並 push**:`polydig_validator/net_alpha.py`(commit `2a59e66`)+ 離線測試 `test_net_alpha.py` + [`net-alpha-mask.md`](reports/optimization/net-alpha-mask.md)。**真實跑出**口罩三雄:
+
+| | A 毛報酬 | B 最保守 net | C 加出場規則 |
+|---|---|---|---|
+| 平均 | **+313%** | **+209%** | **+16%**(南六轉負) |
+
+→ §1「+310% 是 gross、未考慮可成交性」這個論點,現在**有實際數字撐**了。
+
+**🔴 第二輪需補(必修)**:
+1. **目前只跑了「口罩 1 個 case」**:要有可信的 net-alpha 分布,得把 **shipping/AI/國防/矽光子**也跑一遍(`net_alpha_report` 改吃 `cases.json`),看中位數與離散度,而非單一案例。
+2. **C 的出場仍是固定 30 日**:已知偏悲觀(< 口罩 hold_period)。待辦:出場吃 `themes.json` 的 `hold_period`,給「合理風控下淨報酬」區間。
+3. **仍未扣 beta**:net_alpha 是 raw return;高 beta 題材的真 alpha 要再扣(§1 已述,工具未做)。
