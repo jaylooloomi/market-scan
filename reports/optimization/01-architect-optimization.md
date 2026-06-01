@@ -124,3 +124,20 @@ fire     = recent_count >= ABS_FLOOR and ratio >= RATIO_MIN and score >= thresho
 | 🟡 「大量 except:pass」誇大;兩路徑拓樸不精確 | §5 修正措辭(~7 處、subprocess 來源) |
 | ➕ `--db` 是 opt-in、`_dt is None` 偏差、verdict↔themes schema 落差、暖機依賴 harness | §3/§4/§6 補上 |
 | 驗收測試只有正樣本 | §1 要求加負樣本反例測試 |
+
+---
+
+## 第二輪 review(v3,自審 + 實作進度同步)
+
+**評分:A−**(內容紮實;但 v2 寫完後我已把多項 P0 實作掉,文件需同步;另發現一個殘留缺口)。
+
+**✅ 自 v2 後已實作並 push(本 session)**:
+- §1 **vol_conf 阻尼 → 已進線上路徑**(`sources.py`/`server.py`,commit `172db2c`)+ 含正負樣本測試 `test_anomaly_damping.py`。
+- §2 **replay harness → MVP 已建**(`reviewer/replay.py`,commit `9d11c97`,GDELT DOC volume)+ 離線回歸測試鎖住 COVID 案例。
+
+**🔴 第二輪新發現(必修)**:
+1. **vol_conf 進了線上、`abs_floor` 沒有**:線上 `detect_news_anomaly` 只加了 vol_conf;但 `FULL_CONFIDENCE_COUNT=8` 下 rc=4、baseline≈0 仍得 **0.4 > 0.3** → 在 GDELT 那種規模**仍會誤報**。真正擋掉 11/19 的是 **abs_floor**,而它目前**只在 `replay.py`,沒進線上 sensor**。→ 待辦:把 abs_floor(per-source 校準)也加進線上 `detect_news_anomaly`。
+2. **§2 工期表把「MVP」與「完整 GKG ETL」混在一起**:MVP(DOC TimelineVolRaw)約半小時就建好了;那張「~2 週」是**完整 GKG + jieba 等效**版。應拆成「MVP ✅ 已完成」vs「GKG ETL(~2 週,仍待辦)」。
+3. **`FULL_CONFIDENCE_COUNT=8` 仍是拍的**:現在有 replay harness 了,應**用它跑多個事件(COVID/航運/AI)校準** vol_conf 與 abs_floor,別沿用 8。
+
+**仍待辦(未變)**:§3 `term_baseline` 加 `as_of`、§4.3 verdict 回灌的 schema mapping、§5 來源健康 CI。

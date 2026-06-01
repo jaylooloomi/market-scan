@@ -107,3 +107,18 @@
 | 🟡 Telegram 誤歸「v1 不做」(實際只列 Email/LINE) | §4 更正,並計入 Telegram 自身 onboarding 成本 |
 | 🟡 `anomaly_score` 與「歷史命中率」混用 | §3/§4 區分規則式分數 vs 後驗命中率;lag_days 現可顯示 |
 | ➕ 資訊過載、FinMind 額度、重複題材、C 著作權、退出旅程 | §3/§6 補上 |
+
+---
+
+## 第二輪 review(v3,自審 + 實作進度同步)
+
+**評分:B+**(v2 修正了 round-1 的事實錯誤;但部分建議在本 session 已部分落地,需澄清)。
+
+**✅ 自 v2 後的進度**:S4「回溯」的**引擎**已建(`reviewer/replay.py`,GDELT 事件領先回放,commit `9d11c97`)。
+
+**🔴 第二輪需澄清/修正**:
+1. **S4「replay」現在有兩個東西,別混淆**:`backtest.py`(歷史題材 hold-one-out recall)與新的 `replay.py`(GDELT 事件**領先天數**)是**不同**工具。對使用者建立信任最有感的是後者的「領先幾天」,建議 `/dig replay <事件>` 包 `replay.py`,而非 backtest.py。
+2. **`/dig replay` 指令包裝仍未做**:引擎在,但 **command wrapper 還沒寫**(`.claude/commands/` 未新增)→ S4 現狀是「engine ✅ / command ❌」。
+3. **信任層**:lag_days 現可顯示;hit_rate 仍要 live 累積(不變)。
+
+**未變的高優先**:onboarding 自動 demo 偵測、`hit_rate` 的「可量測時間點」誠實標註。
