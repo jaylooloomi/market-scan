@@ -4,6 +4,7 @@ from __future__ import annotations
 from datetime import date, timedelta
 
 from polydig_validator.net_alpha import (
+    compute_case_ticker,
     compute_ticker_net,
     exit_with_rules,
     round_trip_net,
@@ -51,3 +52,24 @@ def test_haircut_direction_t1_entry_beats_late_entry() -> None:
     assert r.gross_A is not None and r.net_B is not None
     assert r.gross_A > r.net_B          # late + costed entry is worse
     assert r.exit_C_days is not None and r.exit_C_days > 0
+
+
+def test_case_ticker_horizon_sensitivity_slow_theme() -> None:
+    """A steadily-rising (slow) theme: a longer exit horizon captures more."""
+    trigger = date(2020, 1, 20)
+    dates = [date(2020, 1, 10) + timedelta(days=i) for i in range(220)]
+    closes = [10.0 if d < trigger else 10.0 + (d - trigger).days * 0.1 for d in dates]
+    r = compute_case_ticker(dates, closes, trigger, horizons=(30, 90, 180))
+    assert r is not None
+    assert r["net_C"][180] > r["net_C"][90] > r["net_C"][30]   # longer = more captured
+    assert r["gross_A"] > r["net_B"]                            # late + costed entry worse
+
+
+def test_case_ticker_stop_loss_caps_crash() -> None:
+    """A crashing theme: the -20% stop bounds the loss (not a -80% wipeout)."""
+    trigger = date(2020, 1, 20)
+    dates = [date(2020, 1, 10) + timedelta(days=i) for i in range(220)]
+    closes = [10.0 if d < trigger else max(2.0, 10.0 - (d - trigger).days * 0.2) for d in dates]
+    r = compute_case_ticker(dates, closes, trigger, horizons=(30, 90, 180), stop_loss=-0.20)
+    assert r is not None
+    assert r["net_C"][180] is not None and r["net_C"][180] > -0.30   # stop bounded the loss

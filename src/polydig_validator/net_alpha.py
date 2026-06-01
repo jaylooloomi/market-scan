@@ -115,6 +115,43 @@ def compute_ticker_net(
     )
 
 
+def compute_case_ticker(
+    dates: list[date],
+    closes: list[float],
+    trigger: date,
+    *,
+    horizons: tuple[int, ...] = (30, 90, 180),
+    fill_lag_trading_days: int = 2,
+    cost: float = ROUND_TRIP_COST,
+    stop_loss: float = -0.20,
+) -> dict[str, Any] | None:
+    """Pure: gross(A, T-1 entry) + net-full(B, T+2 entry) + net-with-exit at each
+    horizon (C@H = T+2 entry, -20% stop or N-day exit, net of cost).
+
+    Reporting C at 30/90/180 lets the reader SEE exit-horizon sensitivity (the fix
+    for 'fixed 30d is too short for slow themes') without parsing free-text hold_period.
+    """
+    i_tm1 = _idx_on_or_before(dates, trigger - timedelta(days=1))
+    i_trig = _idx_on_or_after(dates, trigger)
+    if i_tm1 is None or i_trig is None:
+        return None
+    i_entry = min(i_trig + fill_lag_trading_days, len(dates) - 1)
+    i_long = _idx_on_or_before(dates, trigger + timedelta(days=max(horizons)))
+    if i_long is None or i_long <= i_entry:
+        return None
+    gross_A = closes[i_long] / closes[i_tm1] - 1.0
+    net_B = round_trip_net(closes[i_long] / closes[i_entry] - 1.0, cost)
+    net_C: dict[int, float | None] = {}
+    for H in horizons:
+        i_cap = _idx_on_or_before(dates, trigger + timedelta(days=H))
+        if i_cap is None or i_cap <= i_entry:
+            net_C[H] = None
+            continue
+        _, g = exit_with_rules(closes, i_entry, stop_loss=stop_loss, time_stop=i_cap - i_entry)
+        net_C[H] = round_trip_net(g, cost)
+    return {"gross_A": gross_A, "net_B": net_B, "net_C": net_C}
+
+
 # ── yfinance-backed report (manual/analyst use; needs network) ───────────────
 MASK_TRIO = [("9919.TW", "康那香"), ("1325.TW", "恆大"), ("6504.TW", "南六")]
 
@@ -166,6 +203,88 @@ def net_alpha_report(
     return "\n".join(out)
 
 
+def net_alpha_all_cases(config_path: str = "cases.json", trigger_label: str = "mid") -> str:
+    """Run the net-alpha haircut across ALL cases in cases.json (raw returns, no beta).
+
+    Each case uses its `trigger_label` trigger (default 'mid' = the actionable point).
+    Per-ticker fetch failures (e.g. flaky .TWO TPEx tickers on yfinance) are skipped
+    gracefully and listed. Network; manual/analyst use.
+    """
+    import json
+    import warnings
+    from datetime import datetime
+    from pathlib import Path
+
+    warnings.filterwarnings("ignore")
+    from polydig_validator.data_fetcher import DataFetcher
+
+    cfg = json.loads(Path(config_path).read_text(encoding="utf-8"))
+    f = DataFetcher()
+    horizons = (30, 90, 180)
+
+    def pct(x: float | None) -> str:
+        return f"{x * 100:+.0f}%" if x is not None else "N/A"
+
+    def avg(xs: list[float]) -> float | None:
+        return (sum(xs) / len(xs)) if xs else None
+
+    out = [
+        "# Net-alpha across all Phase 0 cases",
+        "",
+        f"> 每案用 **{trigger_label}** trigger 進場。A=毛(T-1→T+180) · B=最保守 net(T+2 進場+0.5% 成本→T+180) · "
+        "C@N=net(T+2 進場、−20% 停損 / N 日後出場,先到先出)。**raw return,未扣 beta**;"
+        "小型股漲停買不到的假設見 `net-alpha-mask.md`。",
+        "",
+        "| 案例 | 訊號日 | A 毛 | B net | C@30 | C@90 | C@180 |",
+        "|---|---|---|---|---|---|---|",
+    ]
+    overall: dict[Any, list[float]] = {"A": [], "B": [], 30: [], 90: [], 180: []}
+    skipped: list[str] = []
+    for case in cfg["cases"]:
+        trig = next((t for t in case["triggers"] if t["label"] == trigger_label), case["triggers"][0])
+        tdate = datetime.strptime(trig["date"], "%Y-%m-%d").date()
+        agg: dict[Any, list[float]] = {"A": [], "B": [], 30: [], 90: [], 180: []}
+        for tk in case["tickers"]:
+            try:
+                s = f.fetch(tk["symbol"], tdate - timedelta(days=20), tdate + timedelta(days=230))
+                dts = [d.date() for d in s.df.index]
+                cl = [float(c) for c in s.df["Close"].tolist()]
+                r = compute_case_ticker(dts, cl, tdate, horizons=horizons)
+            except Exception:  # noqa: BLE001 — network/ticker flakiness, skip
+                r = None
+            if r is None:
+                skipped.append(tk["symbol"])
+                continue
+            agg["A"].append(r["gross_A"])
+            agg["B"].append(r["net_B"])
+            for H in horizons:
+                if r["net_C"][H] is not None:
+                    agg[H].append(r["net_C"][H])
+        if not agg["A"]:
+            out.append(f"| {case['name']} | {trig['date']} | (fetch 失敗) |  |  |  |  |")
+            continue
+        row = {k: avg(agg[k]) for k in agg}
+        for k, v in row.items():
+            if v is not None:
+                overall[k].append(v)
+        out.append(
+            f"| {case['name']} | {trig['date']} | {pct(row['A'])} | {pct(row['B'])} | "
+            f"{pct(row[30])} | {pct(row[90])} | {pct(row[180])} |"
+        )
+    out.append(
+        f"| **平均** | — | **{pct(avg(overall['A']))}** | **{pct(avg(overall['B']))}** | "
+        f"**{pct(avg(overall[30]))}** | **{pct(avg(overall[90]))}** | **{pct(avg(overall[180]))}** |"
+    )
+    out += [
+        "",
+        "→ **比 C@30 vs C@90 vs C@180**:慢熱題材(航運/AI/矽光子)較長持有較好,快題材(口罩/國防)較短較好"
+        " → 證明「固定 30 日出場」太死,出場應依題材時間軸(`themes.json` hold_period)。",
+    ]
+    if skipped:
+        out += ["", f"> ⚠️ 略過(fetch 失敗,多為 .TWO 上櫃股 yfinance 不穩):{', '.join(sorted(set(skipped)))}"]
+    return "\n".join(out)
+
+
 def main() -> int:
     import sys
 
@@ -173,8 +292,7 @@ def main() -> int:
         sys.stdout.reconfigure(encoding="utf-8")
     except Exception:
         pass
-    md = net_alpha_report()
-    print(md)
+    print(net_alpha_all_cases())
     return 0
 
 
