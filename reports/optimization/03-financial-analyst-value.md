@@ -121,7 +121,7 @@ EV(訊號) = 命中率 × 平均報酬(net) − (1−命中率) × 平均虧損(
 
 → §1「+310% 是 gross、未考慮可成交性」這個論點,現在**有實際數字撐**了。
 
-**🔴 第二輪需補(必修)**:
-1. **目前只跑了「口罩 1 個 case」**:要有可信的 net-alpha 分布,得把 **shipping/AI/國防/矽光子**也跑一遍(`net_alpha_report` 改吃 `cases.json`),看中位數與離散度,而非單一案例。
-2. **C 的出場仍是固定 30 日**:已知偏悲觀(< 口罩 hold_period)。待辦:出場吃 `themes.json` 的 `hold_period`,給「合理風控下淨報酬」區間。
-3. **仍未扣 beta**:net_alpha 是 raw return;高 beta 題材的真 alpha 要再扣(§1 已述,工具未做)。
+**第二輪需補(進度)**:
+1. ~~**只跑了口罩 1 個 case**~~ → **✅ 已修(本次)**:`net_alpha_all_cases` 跑滿 **5 案例**([net-alpha-all-cases.md](reports/optimization/net-alpha-all-cases.md))。平均**毛 +204% → net +180%(全持有)→ C@30 僅 +14%**。
+2. ~~**C 固定 30 日太死**~~ → **🟡 部分修**:現在輸出 **C@30/90/180 多視窗**,出場敏感度一目了然(矽光子 90 天最佳、國防怎麼出都小、口罩需 >30 天)。**仍待辦**:自動吃 `themes.json` 的 `hold_period` 給單一「合理出場」淨報酬。
+3. **🔴 仍未扣 beta**:net_alpha 是 raw return;高 beta 題材(航運/AI)真 alpha 要再扣(§1 已述,工具未做)。
