@@ -30,5 +30,5 @@ s.google_trends_check("CPO", region="TW", timeframe="now 7-d")
 ## 限制(誠實聲明)
 
 - `detect_news_anomaly` 比較的是 **feed 當前可取得視窗內**的近期 vs 前期詞頻。真正跨週/跨月的時間基線需要 Phase 3 的歷史儲存層。
-- 中文斷詞用 2-4 字 CJK chunk 的粗略法,非真正分詞;感測器刻意保持「笨」,語意交給 Reviewer。
+- 中文斷詞用 **jieba 詞性標註**(保留名詞/專名,並注入 domain 詞庫);jieba 不在時退回 2-4 字 CJK chunk。感測器仍刻意保持「笨」,語意交給 Reviewer。
 - Google Trends 限流頻繁,生產環境需 cache + 退避。

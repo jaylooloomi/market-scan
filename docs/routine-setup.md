@@ -7,10 +7,10 @@ Remote routine 跑在雲端,**沒有**你的 `.env`(FinMind token)、本機 Pyth
 PolyDig 依賴本機環境,所以**一定要選 local / 在本機這台跑**。
 
 ## 前置(一次性)
-1. 套件已安裝:`pip install -e .`(在專案根目錄 `D:\git\harness-run\polydig`)。
+1. 套件已安裝:`pip install -e .`(在專案根目錄 `<你的專案目錄>`)。
 2. `.env` 內有 `FINMIND_TOKEN`(沒有的話 FinMind 工具回 graceful error,其餘感測器照常)。
 3. 5 個 MCP server 已註冊在 `.mcp.json`,權限已在 `.claude/settings.json` 預核 → 非互動 routine 不會卡權限提示。
-4. 確認 `python` 指向裝了 polydig 的直譯器(本機為 `C:\Python314\python.exe`)。若 routine 環境的 `python` 不對,把 `.mcp.json` 的 `"command": "python"` 改成絕對路徑。
+4. 確認 `python` 指向裝了 polydig 的直譯器。若 routine 環境的 `python` 不對,把 `.mcp.json` 的 `"command": "python"` 改成該直譯器的絕對路徑。
 
 ## 建立 routine
 在 Routines UI 的「What do you want automated?」填(擇一):
@@ -25,7 +25,7 @@ PolyDig 依賴本機環境,所以**一定要選 local / 在本機這台跑**。
 > 在專案目錄執行 `python -m polydig_mcp.daily_cli --db ./polydig.db`,然後把 reports/latest.md 的內容摘要給我。
 
 - 時間:設 **08:00**(或你要的時間;設計 spec 預設 06:00)。
-- 工作目錄(CWD):**專案根目錄** `D:\git\harness-run\polydig`(skill 讀 `themes.json` 相對路徑、`.env` 搜尋都靠這個)。
+- 工作目錄(CWD):**專案根目錄** `<你的專案目錄>`(skill 讀 `themes.json` 相對路徑、`.env` 搜尋都靠這個)。
 
 ## 兩條路徑的差別
 | | (A) skill / `/dig` | (B) `daily_cli` |

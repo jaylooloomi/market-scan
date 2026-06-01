@@ -97,7 +97,7 @@ def _verdict_block(v: dict[str, Any]) -> str:
         f"- 新聞/觸發:{v['trigger']}",
         *_source_lines(v.get("sources", [])),
         f"- 題材:{v['theme']}",
-        "- 受益股(條列):",
+        "- 受益股因果樹(一/二/三階,條列):",
         *_stock_bullets(v.get("causal_tree", {})),
         "",
         "**📜 歷史 → 日期 → 題材 → 股票**",

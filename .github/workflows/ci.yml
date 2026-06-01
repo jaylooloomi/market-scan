@@ -1,0 +1,33 @@
+name: CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install (package + schedule + dev extras)
+        run: |
+          python -m pip install --upgrade pip
+          # Core deps + apscheduler (scheduler test) + pytest. [agents]
+          # (anthropic + chromadb) is intentionally NOT installed: the tests
+          # exercise the offline token-overlap fallback + heuristic reviewer,
+          # so the heavy embedding/LLM deps aren't needed for CI.
+          pip install -e ".[schedule,dev]"
+
+      - name: Run tests
+        env:
+          PYTHONIOENCODING: utf-8
+        # Some tests hit live RSS/FRED/TWSE endpoints and degrade gracefully
+        # (no FinMind token needed).
+        run: pytest

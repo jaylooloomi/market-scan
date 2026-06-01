@@ -13,7 +13,7 @@
 
 | source | 名稱 | 可行性 | 備註 |
 |---|---|---|---|
-| `mohw` | 衛福部 | RSS(待驗證 feed 路徑) | 疫苗 EUA、健保藥價 |
+| `mohw` | 衛福部 | RSS(已驗證可用) | 疫苗 EUA、健保藥價 |
 | `fsc` | 金管會 | needs_html_scrape | 金融法規、ETF 核准;新聞稿 HTML |
 | `ey` | 行政院 | needs_html_scrape | 重大政策、補助 |
 | `ly` | 立法院公報 | needs_html_scrape | 三讀法案;lis.ly.gov.tw 結構複雜 |

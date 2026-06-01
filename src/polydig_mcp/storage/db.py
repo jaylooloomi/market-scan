@@ -39,7 +39,7 @@ from __future__ import annotations
 import json
 import sqlite3
 from contextlib import contextmanager
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any, Generator
 
@@ -60,7 +60,8 @@ CREATE TABLE IF NOT EXISTS term_history (
     date   TEXT NOT NULL,
     term   TEXT NOT NULL,
     count  INTEGER NOT NULL,
-    source TEXT NOT NULL
+    source TEXT NOT NULL,
+    UNIQUE(date, term, source)
 );
 
 CREATE TABLE IF NOT EXISTS verdicts (
@@ -92,8 +93,9 @@ CREATE TABLE IF NOT EXISTS index_history (
 
 
 class PolyDigDB:
-    """Thin wrapper around sqlite3. Thread-safe via check_same_thread=False
-    (single writer assumed; fine for the daily cron use-case)."""
+    """Thin wrapper around sqlite3. Uses check_same_thread=False with a
+    SINGLE-WRITER assumption (daily cron / headless use-case) — NOT safe for
+    concurrent writers."""
 
     def __init__(self, db_path: str | Path = _DEFAULT_PATH) -> None:
         self.path = Path(db_path)
@@ -125,7 +127,7 @@ class PolyDigDB:
                 "INSERT INTO signals (timestamp, source, signal_type, content_json, anomaly_score) "
                 "VALUES (?, ?, ?, ?, ?)",
                 (
-                    signal.get("timestamp", datetime.utcnow().isoformat()),
+                    signal.get("timestamp", datetime.now(timezone.utc).isoformat()),
                     signal.get("source", ""),
                     signal.get("signal_type", ""),
                     json.dumps(signal.get("content", {}), ensure_ascii=False),

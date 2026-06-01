@@ -93,7 +93,8 @@ def fetch_scfi_news_signal(max_items: int = 8) -> dict[str, Any]:
 
     import feedparser
 
-    parsed = feedparser.parse(_SCFI_NEWS_RSS)
+    # Fetch via shared session (timeout/retry/UA) — feedparser's own fetch has no timeout.
+    parsed = feedparser.parse(polite_get(_SCFI_NEWS_RSS).content)
     if parsed.bozo and not parsed.entries:
         raise SensorError("fetch_failed", f"SCFI news RSS unavailable: {getattr(parsed,'bozo_exception','?')}")
 

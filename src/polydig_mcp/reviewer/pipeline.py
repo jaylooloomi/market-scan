@@ -6,6 +6,7 @@ calling the MCP tools; here we call the sensor tool functions in-process.
 """
 from __future__ import annotations
 
+import logging
 from datetime import date
 from pathlib import Path
 from typing import Any, Callable
@@ -14,6 +15,8 @@ from polydig_mcp.history.store import ThemeStore
 from polydig_mcp.reporting.generator import generate_report
 from polydig_mcp.reviewer.engine import review
 from polydig_mcp.reviewer.scout import signals_to_candidates
+
+log = logging.getLogger("polydig.pipeline")
 
 
 def collect_signals(
@@ -145,15 +148,15 @@ def run_daily(
                 if "error" not in sig.get("content", {}):
                     try:
                         db.insert_signal(sig)
-                    except Exception:  # noqa: BLE001
-                        pass
+                    except Exception as exc:  # noqa: BLE001
+                        log.warning("persist signal failed (%s): %s", sig.get("source"), exc)
 
             # Persist all verdicts (rejects = negative samples)
             for v in verdicts:
                 try:
                     db.insert_verdict(v, report_date=date_str)
-                except Exception:  # noqa: BLE001
-                    pass
+                except Exception as exc:  # noqa: BLE001
+                    log.warning("persist verdict failed (%s): %s", v.get("theme"), exc)
 
             # Run backfill + persist missed_catch
             if safety_net_candidates:
@@ -172,12 +175,12 @@ def run_daily(
                             "backfill": findings,
                         })
                     missed = enriched_missed  # replace with enriched version
-                except Exception:  # noqa: BLE001
-                    pass  # backfill failure must not abort the run
+                except Exception as exc:  # noqa: BLE001
+                    log.warning("backfill failed: %s", exc)  # must not abort the run
 
             db.close()
-        except Exception:  # noqa: BLE001
-            pass  # storage failure must not abort the run
+        except Exception as exc:  # noqa: BLE001
+            log.warning("storage persistence failed: %s", exc)  # must not abort the run
 
     report_md = generate_report(verdicts, report_date=report_date, missed_clusters=missed or None)
 

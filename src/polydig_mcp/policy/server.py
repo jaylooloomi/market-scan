@@ -19,6 +19,7 @@ from mcp.server.fastmcp import FastMCP
 
 from polydig_mcp.common.envelope import Signal, error_signal
 from polydig_mcp.common.errors import SensorError
+from polydig_mcp.common.http import polite_get
 
 mcp = FastMCP("polydig-policy")
 
@@ -37,7 +38,7 @@ class PolicySource:
 POLICY_SOURCES: dict[str, PolicySource] = {
     "mohw": PolicySource(
         "mohw", "衛福部", "rss", "https://www.mohw.gov.tw/rss-16-1.html",
-        "疫苗 EUA、健保藥價等。多數頁面有 RSS,須驗證實際 feed 路徑。",
+        "疫苗 EUA、健保藥價等。RSS feed 已驗證可用(text/xml,~20 則)。",
     ),
     "fsc": PolicySource(
         "fsc", "金管會", "needs_html_scrape", None,
@@ -84,7 +85,11 @@ def fetch_policy_announcements(source: str, limit: int = 20) -> list[dict[str, A
             ).to_dict()
         ]
 
-    parsed = feedparser.parse(src.url)
+    try:
+        resp = polite_get(src.url)  # shared timeout/retry/UA (no untimed feedparser fetch)
+    except SensorError as e:
+        return [error_signal(f"policy.{src.id}", "policy_announcement", e.message)]
+    parsed = feedparser.parse(resp.content)
     if parsed.bozo and not parsed.entries:
         return [error_signal(f"policy.{src.id}", "policy_announcement",
                              f"feed unavailable: {getattr(parsed, 'bozo_exception', 'unknown')}")]

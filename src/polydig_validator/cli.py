@@ -17,6 +17,7 @@ from polydig_validator.report import (
     TickerResult,
     TriggerResult,
     ValidatorRun,
+    _fmt_pct,
     write_outputs,
 )
 
@@ -112,10 +113,12 @@ def run_validator(config_path: Path, output_dir: Path) -> ValidatorRun:
                         verdict=verdict,
                     )
                 )
+                # _fmt_pct handles None correctly (the old `x and f"" or "N/A"`
+                # idiom wrongly printed "N/A" when excess was exactly 0.0).
                 print(
                     f"    {tk['symbol']} ({tk['name']}): "
-                    f"pre={wr.pre_excess and f'{wr.pre_excess*100:+.1f}%' or 'N/A'} "
-                    f"post30={wr.post_excess.get(30) and f'{wr.post_excess[30]*100:+.1f}%' or 'N/A'} "
+                    f"pre={_fmt_pct(wr.pre_excess)} "
+                    f"post30={_fmt_pct(wr.post_excess.get(30))} "
                     f"→ {verdict.value}",
                     file=sys.stderr,
                 )

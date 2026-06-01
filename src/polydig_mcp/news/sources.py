@@ -15,6 +15,7 @@ from typing import Any
 import feedparser
 
 from polydig_mcp.common.errors import SensorError
+from polydig_mcp.common.http import polite_get
 
 
 @dataclass(frozen=True)
@@ -34,7 +35,9 @@ FEEDS: dict[str, Feed] = {
         "zh", "finance",
     ),
     "ltn-ec": Feed(
-        "ltn-ec", "自由財經", "https://ec.ltn.com.tw/rss/all.xml", "zh", "finance",
+        # ec.ltn.com.tw/rss/all.xml went dead (serves HTML now); the live 財經 feed
+        # is on the news subdomain.
+        "ltn-ec", "自由財經", "https://news.ltn.com.tw/rss/business.xml", "zh", "finance",
     ),
     "cna-finance": Feed(
         "cna-finance", "中央社財經", "https://feeds.feedburner.com/rsscna/finance",
@@ -143,7 +146,10 @@ def _entry_time(entry: Any) -> datetime | None:
 
 def fetch_feed(feed: Feed) -> list[dict[str, Any]]:
     """Parse one feed into normalized items. Raises SensorError on hard failure."""
-    parsed = feedparser.parse(feed.url)
+    # Fetch via the shared session (timeout/retry/UA) instead of letting
+    # feedparser do its own untimed urllib fetch — a hung feed would otherwise
+    # block the sensor forever (feedparser.parse has no timeout).
+    parsed = feedparser.parse(polite_get(feed.url).content)
     if parsed.bozo and not parsed.entries:
         raise SensorError(
             "fetch_failed",
