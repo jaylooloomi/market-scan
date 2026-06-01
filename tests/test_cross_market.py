@@ -37,15 +37,18 @@ def main() -> int:
     print("=== Gap 5: Cross-Market US → TW Linkage ===\n")
 
     # ── 1. Direct helper test ─────────────────────────────────────────────
-    sig_strong = make_us_signal("phlx_semi", 0.12)  # +12% PHLX Semiconductor
+    # NASDAQ carries the semi/AI families (PHLX/SOX has no keyless FRED feed,
+    # so it was removed from US_TW_MAPPING — semis ride nasdaq instead).
+    from polydig_mcp.data.macro import US_TW_MAPPING
+    sig_strong = make_us_signal("nasdaq", 0.12)  # +12% NASDAQ
     cands = us_signal_to_tw_candidates(sig_strong)
-    print(f"PHLX Semi +12% → {len(cands)} TW candidates:")
+    print(f"NASDAQ +12% → {len(cands)} TW candidates:")
     for c in cands:
         print(f"  - {c['theme_hint']}")
         assert c["cross_market"] is True
-        assert c["us_sector"] == "phlx_semi"
-        assert c["tw_family"] in c["theme_hint"]
-    assert len(cands) >= 1, "expected >=1 TW candidate for PHLX +12%"
+        assert c["us_moves"][0]["sector"] == "nasdaq"
+        assert c["tw_family"] in US_TW_MAPPING["nasdaq"]
+    assert len(cands) >= 1, "expected >=1 TW candidate for NASDAQ +12%"
     print("direct helper: PASS")
 
     # ── 2. Below threshold → no candidates ───────────────────────────────
@@ -84,6 +87,10 @@ def main() -> int:
 
     print("\n=== PASS ===")
     return 0
+
+
+def test_cross_market():
+    assert main() == 0
 
 
 if __name__ == "__main__":

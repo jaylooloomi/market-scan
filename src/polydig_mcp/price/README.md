@@ -8,9 +8,11 @@
 
 | Tool | 說明 | 資料源 |
 |---|---|---|
-| `get_quote(symbol)` | 最新報價(收盤/漲跌幅/量),接受 `2330` / `2330.TW` / `3163.TWO` | yfinance ✅ |
+| `get_quote(symbol)` | 最新報價(收盤/漲跌幅/量),接受 `2330` / `2330.TW` / `3163.TWO` | FinMind ✅ |
 | `detect_limit_up_cluster(min_size)` | 當日漲停股按產業分群(≥`min_size` 檔成 cluster) | TWSE OpenAPI ✅ |
-| `volume_anomaly(symbol, days)` | 最新量 vs 過去 N 日均量的爆量偵測 | yfinance ✅ |
+| `volume_anomaly(symbol, days)` | 最新量 vs 過去 N 日均量的爆量偵測 | FinMind ✅ |
+
+> ⚠️ **不用 yfinance**:`get_quote`/`volume_anomaly` 走 **FinMind**(requests-based),`detect_limit_up_cluster` 走 **TWSE OpenAPI**。yfinance 依賴 curl_cffi 會弄壞 MCP stdio 傳輸,故 server 一律不用(只留在 Phase 0 CLI validator)。
 
 ## 範例
 

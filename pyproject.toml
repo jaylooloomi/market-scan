@@ -29,9 +29,14 @@ agents = [
 schedule = [
     "apscheduler>=3.10",
 ]
+dev = [
+    "pytest>=8.0",
+]
 
 [project.scripts]
 polydig-validator = "polydig_validator.cli:main"
+polydig-daily = "polydig_mcp.daily_cli:main"
+polydig-metrics = "polydig_mcp.reviewer.metrics:main"
 polydig-news-mcp = "polydig_mcp.news.server:main"
 polydig-data-mcp = "polydig_mcp.data.server:main"
 polydig-price-mcp = "polydig_mcp.price.server:main"
@@ -40,3 +45,9 @@ polydig-roadmap-mcp = "polydig_mcp.roadmap.server:main"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/polydig_validator", "src/polydig_mcp"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+# Each tests/test_*.py exposes a test_* wrapper around its main(); some hit live
+# RSS/FRED/TWSE and degrade gracefully (no FinMind token needed).

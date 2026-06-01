@@ -76,5 +76,9 @@ def main() -> int:
     return 0
 
 
+def test_shipping_anomaly():
+    assert main() == 0
+
+
 if __name__ == "__main__":
     raise SystemExit(main())

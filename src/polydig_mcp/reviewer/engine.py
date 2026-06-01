@@ -133,4 +133,28 @@ def _llm_review(candidate: dict[str, Any], matches: list[dict[str, Any]]) -> dic
     text = msg.content[0].text
     # The model is asked to emit a single JSON object.
     start, end = text.find("{"), text.rfind("}")
-    return json.loads(text[start : end + 1])
+    obj = json.loads(text[start : end + 1])
+    _validate_verdict(obj)  # raises on schema violation -> review() falls back to heuristic
+    return obj
+
+
+def _validate_verdict(obj: Any) -> None:
+    """Light schema check on the LLM's JSON output (dependency-free).
+
+    Raises ValueError on violation; review()'s try/except then falls back to the
+    heuristic verdict (with the error recorded in reasoning). Keeps a malformed or
+    hallucinated LLM response from silently entering the report.
+    """
+    if not isinstance(obj, dict):
+        raise ValueError("LLM output is not a JSON object")
+    required = ("theme", "trigger", "causal_tree", "signal_grade", "confidence", "reasoning")
+    missing = [k for k in required if k not in obj]
+    if missing:
+        raise ValueError(f"LLM verdict missing required keys: {missing}")
+    if obj["signal_grade"] not in {g.value for g in SignalGrade}:
+        raise ValueError(f"invalid signal_grade: {obj['signal_grade']!r}")
+    conf = obj.get("confidence")
+    if not isinstance(conf, (int, float)) or not (0.0 <= float(conf) <= 1.0):
+        raise ValueError(f"confidence out of [0,1]: {conf!r}")
+    if not isinstance(obj.get("causal_tree"), dict):
+        raise ValueError("causal_tree must be an object")

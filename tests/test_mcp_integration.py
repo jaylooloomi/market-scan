@@ -66,5 +66,9 @@ async def main() -> int:
     return 0 if ok else 1
 
 
+def test_mcp_servers():
+    assert asyncio.run(main()) == 0
+
+
 if __name__ == "__main__":
     raise SystemExit(asyncio.run(main()))

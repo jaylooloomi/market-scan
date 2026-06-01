@@ -10,13 +10,16 @@ Key design:
   this avoids trivially self-matching.
 - Synthesise signals from each theme's trigger_type + trigger_event keywords
   (no network calls needed).
-- A recall is counted if:
-    (a) top-1 historical_match.theme_id == expected_id  OR
-    (b) any tier_1 ticker from the verdict's causal_tree overlaps the
-        expected theme's tier_1 tickers
-    AND the signal_grade != "reject"
-- recall_at_k: fraction of cases where (a) is satisfied within the top-k
-  RAG results (pre-verdict, pure retrieval quality check).
+- Recall (hold-one-out): the correct theme is MASKED, so recall honestly means
+  the synthesised signal still surfaces a NON-REJECTED sibling analogue
+  (signal_grade != "reject"). tier-1 ticker overlap with the masked theme is
+  reported as a stricter sub-signal. This is a lenient "an analogue exists"
+  measure — NOT proof of identifying the exact right theme. A rigorous test needs
+  negative cases (themes that did NOT play out); see audit finding M2.
+- recall_at_k: fraction of cases where the correct theme is in the top-k RAG
+  results — but the query is built from the theme's OWN keywords while the store
+  contains that theme, so this is near-circular (self-retrieval). Treat as a
+  sanity check, not a discrimination metric.
 """
 from __future__ import annotations
 
@@ -26,7 +29,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from polydig_mcp.history.store import ThemeStore, load_themes, _tokens, theme_document, Match
+from polydig_mcp.history.store import ThemeStore, load_themes, theme_document, Match
 from polydig_mcp.reviewer.engine import review
 from polydig_mcp.reviewer.scout import signals_to_candidates
 
@@ -121,30 +124,15 @@ class BacktestCase:
     note: str
 
 
-def _theme_keyword_hit(candidate_hint: str, theme: dict[str, Any]) -> bool:
-    """Check if the candidate theme_hint contains keywords matching the expected theme.
-
-    In hold-one-out mode the top historical match can't be the masked theme, so
-    we check whether the generated candidate hint/keywords reference the theme's
-    name or trigger keywords (CJK bigram token overlap).
-    """
-    expected_doc = theme_document(theme)
-    hint_tokens = _tokens(candidate_hint)
-    expected_tokens = _tokens(expected_doc)
-    # At least 1 shared non-trivial token (len >= 2)
-    shared = {t for t in hint_tokens & expected_tokens if len(t) >= 2}
-    return bool(shared)
-
-
 def run_backtest_case(theme: dict[str, Any]) -> BacktestCase:
     """Run one hold-one-out backtest for a deep-case theme.
 
-    Recall criteria (any one suffices):
-      (a) grade != reject AND the candidate theme_hint matches the expected
-          theme's keywords (the system flagged the right topic, just with a
-          stand-in analogue since the theme is masked)
-      (b) grade != reject AND tier_1 ticker overlap between verdict tree and
-          expected theme's ALL tiers (expected theme tickers vs. verdict tree)
+    Recall (honest, post-M2-fix): ``grade != "reject"`` — i.e. with the correct
+    theme MASKED, the synthesised signal still surfaces a non-rejected sibling
+    analogue. tier-1 ticker overlap with the masked theme is computed and reported
+    as a stricter sub-signal, but is NOT required for recall. (The previous
+    ``keyword_hit`` criterion was tautological — the candidate hint is literally the
+    theme name — so it always passed and was removed; see audit M2.)
     """
     tid = theme["id"]
     # All tickers across all tiers of the expected theme
@@ -195,16 +183,12 @@ def run_backtest_case(theme: dict[str, Any]) -> BacktestCase:
             verdict_tickers.add(m.get("ticker", ""))
     tier1_overlap = bool(expected_tickers & verdict_tickers)
 
-    # Check keyword match on the candidate hint
-    hint = best_candidate.get("theme_hint", "")
-    keyword_hit = _theme_keyword_hit(hint, theme)
-
-    # Recall: non-reject AND (keyword match on candidate OR ticker overlap)
-    recalled = (grade != "reject") and (keyword_hit or tier1_overlap)
+    # Hold-one-out: the correct theme is MASKED, so we can't check "found the right
+    # theme". Honest recall = a non-rejected sibling analogue was surfaced. tier-1
+    # ticker overlap is reported as a stricter sub-signal but not required.
+    recalled = (grade != "reject")
 
     note_parts = [f"grade={grade}", f"top_match={top_match_id}"]
-    if keyword_hit:
-        note_parts.append("keyword_hit=True")
     if tier1_overlap:
         note_parts.append(f"ticker_overlap={expected_tickers & verdict_tickers}")
 

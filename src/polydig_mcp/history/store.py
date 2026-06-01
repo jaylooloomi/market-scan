@@ -122,7 +122,9 @@ class ThemeStore:
             if not d:
                 continue
             overlap = len(q & d)
-            score = overlap / (len(q | d) ** 0.5) if q else 0.0  # asymmetric Jaccard-ish
+            # asymmetric Jaccard-ish; capped at 1.0 to honour the 0..1 contract
+            # (Match.score docstring + REVIEW_JSON_SCHEMA confidence maximum=1).
+            score = min(1.0, overlap / (len(q | d) ** 0.5)) if q else 0.0
             scored.append(Match(self._by_id[tid], score=score))
         scored.sort(key=lambda m: m.score, reverse=True)
         return scored[:n_results]
