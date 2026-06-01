@@ -152,6 +152,68 @@ def compute_case_ticker(
     return {"gross_A": gross_A, "net_B": net_B, "net_C": net_C}
 
 
+_HOLD_UNIT_DAYS = {"年": 365, "月": 30, "週": 7, "周": 7, "日": 1, "天": 1}
+
+
+def parse_hold_period(text: str) -> tuple[int, int] | None:
+    """Parse free-text hold_period ('1-3 個月' / '6-12 個月' / '1-2 年(...)') into
+    (lo_days, hi_days). Returns None if no number+unit found. Uses the FIRST numeric
+    range/number and the FIRST unit character present."""
+    import re
+
+    if not text:
+        return None
+    unit = next((d for ch, d in _HOLD_UNIT_DAYS.items() if ch in text), None)
+    if unit is None:
+        return None
+    m = re.search(r"(\d+)\s*[-~–]\s*(\d+)", text)
+    if m:
+        lo, hi = int(m.group(1)), int(m.group(2))
+    else:
+        m1 = re.search(r"(\d+)", text)
+        if not m1:
+            return None
+        lo = hi = int(m1.group(1))
+    return lo * unit, hi * unit
+
+
+def theme_aware_net(
+    dates: list[date],
+    closes: list[float],
+    trigger: date,
+    hold_hi_days: int,
+    *,
+    fill_lag_trading_days: int = 2,
+    cost: float = ROUND_TRIP_COST,
+    stop_loss: float = -0.20,
+) -> dict[str, Any] | None:
+    """Net return when holding for the theme's OWN hold_period upper bound, exiting
+    early on a -20% stop. `capped=True` if hold_hi extends past the price data."""
+    i_trig = _idx_on_or_after(dates, trigger)
+    if i_trig is None:
+        return None
+    i_entry = min(i_trig + fill_lag_trading_days, len(dates) - 1)
+    target = trigger + timedelta(days=hold_hi_days)
+    i_hold = _idx_on_or_before(dates, target)
+    capped = (i_hold is None) or (dates[-1] < target)
+    if i_hold is None or i_hold <= i_entry:
+        i_hold = len(dates) - 1
+    if i_hold <= i_entry:
+        return None
+    _, g = exit_with_rules(closes, i_entry, stop_loss=stop_loss, time_stop=i_hold - i_entry)
+    return {"net": round_trip_net(g, cost), "hold_days": hold_hi_days, "capped": capped}
+
+
+# cases.json case id -> themes.json theme id (for hold_period lookup)
+_CASE_TO_THEME = {
+    "mask": "mask_2020",
+    "shipping": "shipping_2020",
+    "ai": "ai_first_wave_2023",
+    "defense": "defense_2022",
+    "silicon_photonics": "silicon_photonics_2024",
+}
+
+
 # ── yfinance-backed report (manual/analyst use; needs network) ───────────────
 MASK_TRIO = [("9919.TW", "康那香"), ("1325.TW", "恆大"), ("6504.TW", "南六")]
 
@@ -203,12 +265,17 @@ def net_alpha_report(
     return "\n".join(out)
 
 
-def net_alpha_all_cases(config_path: str = "cases.json", trigger_label: str = "mid") -> str:
-    """Run the net-alpha haircut across ALL cases in cases.json (raw returns, no beta).
+def net_alpha_all_cases(
+    config_path: str = "cases.json",
+    trigger_label: str = "mid",
+    themes_path: str | None = None,
+) -> str:
+    """Net-alpha haircut across ALL cases in cases.json (raw returns, no beta).
 
-    Each case uses its `trigger_label` trigger (default 'mid' = the actionable point).
-    Per-ticker fetch failures (e.g. flaky .TWO TPEx tickers on yfinance) are skipped
-    gracefully and listed. Network; manual/analyst use.
+    Besides fixed 30/90/180-day exits, adds a **theme-aware** exit (C@hold): hold for
+    the theme's own `hold_period` upper bound (from themes.json via parse_hold_period),
+    exiting early on a -20% stop. `*` on the hold label = the hold window runs past
+    available price data (capped). Per-ticker fetch failures skipped + listed. Network.
     """
     import json
     import warnings
@@ -219,8 +286,15 @@ def net_alpha_all_cases(config_path: str = "cases.json", trigger_label: str = "m
     from polydig_validator.data_fetcher import DataFetcher
 
     cfg = json.loads(Path(config_path).read_text(encoding="utf-8"))
+    if themes_path is None:
+        themes_path = Path(__file__).resolve().parents[1] / "polydig_mcp" / "history" / "themes.json"
+    try:
+        themes = {t["id"]: t for t in json.loads(Path(themes_path).read_text(encoding="utf-8"))["themes"]}
+    except Exception:  # noqa: BLE001
+        themes = {}
+
     f = DataFetcher()
-    horizons = (30, 90, 180)
+    fixed = (30, 90, 180)
 
     def pct(x: float | None) -> str:
         return f"{x * 100:+.0f}%" if x is not None else "N/A"
@@ -231,54 +305,65 @@ def net_alpha_all_cases(config_path: str = "cases.json", trigger_label: str = "m
     out = [
         "# Net-alpha across all Phase 0 cases",
         "",
-        f"> 每案用 **{trigger_label}** trigger 進場。A=毛(T-1→T+180) · B=最保守 net(T+2 進場+0.5% 成本→T+180) · "
-        "C@N=net(T+2 進場、−20% 停損 / N 日後出場,先到先出)。**raw return,未扣 beta**;"
-        "小型股漲停買不到的假設見 `net-alpha-mask.md`。",
+        f"> 每案用 **{trigger_label}** trigger 進場。A=毛(T-1→T+180) · B=最保守 net(T+2+0.5% 成本→T+180) · "
+        "C@N=net(T+2、−20% 停損 / N 日出場) · **C@hold=依該題材 `hold_period` 出場**(本次新增)。"
+        "raw return、未扣 beta;`*`=hold 視窗超出可得股價(截斷)。",
         "",
-        "| 案例 | 訊號日 | A 毛 | B net | C@30 | C@90 | C@180 |",
-        "|---|---|---|---|---|---|---|",
+        "| 案例 | 訊號日 | A 毛 | B net | C@30 | C@90 | C@180 | C@hold(題材時間軸) |",
+        "|---|---|---|---|---|---|---|---|",
     ]
-    overall: dict[Any, list[float]] = {"A": [], "B": [], 30: [], 90: [], 180: []}
+    overall: dict[Any, list[float]] = {"A": [], "B": [], 30: [], 90: [], 180: [], "hold": []}
     skipped: list[str] = []
     for case in cfg["cases"]:
         trig = next((t for t in case["triggers"] if t["label"] == trigger_label), case["triggers"][0])
         tdate = datetime.strptime(trig["date"], "%Y-%m-%d").date()
-        agg: dict[Any, list[float]] = {"A": [], "B": [], 30: [], 90: [], 180: []}
+        theme = themes.get(_CASE_TO_THEME.get(case.get("id", ""), ""))
+        hp = parse_hold_period(theme.get("hold_period", "")) if theme else None
+        hold_hi = hp[1] if hp else 180
+        fetch_to = max(230, hold_hi + 30)
+        agg: dict[Any, list[float]] = {"A": [], "B": [], 30: [], 90: [], 180: [], "hold": []}
+        capped = False
         for tk in case["tickers"]:
             try:
-                s = f.fetch(tk["symbol"], tdate - timedelta(days=20), tdate + timedelta(days=230))
+                s = f.fetch(tk["symbol"], tdate - timedelta(days=20), tdate + timedelta(days=fetch_to))
                 dts = [d.date() for d in s.df.index]
                 cl = [float(c) for c in s.df["Close"].tolist()]
-                r = compute_case_ticker(dts, cl, tdate, horizons=horizons)
+                r = compute_case_ticker(dts, cl, tdate, horizons=fixed)
+                th = theme_aware_net(dts, cl, tdate, hold_hi)
             except Exception:  # noqa: BLE001 — network/ticker flakiness, skip
-                r = None
+                r = th = None
             if r is None:
                 skipped.append(tk["symbol"])
                 continue
             agg["A"].append(r["gross_A"])
             agg["B"].append(r["net_B"])
-            for H in horizons:
+            for H in fixed:
                 if r["net_C"][H] is not None:
                     agg[H].append(r["net_C"][H])
+            if th is not None:
+                agg["hold"].append(th["net"])
+                capped = capped or th["capped"]
         if not agg["A"]:
-            out.append(f"| {case['name']} | {trig['date']} | (fetch 失敗) |  |  |  |  |")
+            out.append(f"| {case['name']} | {trig['date']} | (fetch 失敗) |  |  |  |  |  |")
             continue
         row = {k: avg(agg[k]) for k in agg}
         for k, v in row.items():
             if v is not None:
                 overall[k].append(v)
+        hold_lbl = f"{pct(row['hold'])}（{hold_hi}天{'*' if capped else ''}）"
         out.append(
             f"| {case['name']} | {trig['date']} | {pct(row['A'])} | {pct(row['B'])} | "
-            f"{pct(row[30])} | {pct(row[90])} | {pct(row[180])} |"
+            f"{pct(row[30])} | {pct(row[90])} | {pct(row[180])} | {hold_lbl} |"
         )
     out.append(
         f"| **平均** | — | **{pct(avg(overall['A']))}** | **{pct(avg(overall['B']))}** | "
-        f"**{pct(avg(overall[30]))}** | **{pct(avg(overall[90]))}** | **{pct(avg(overall[180]))}** |"
+        f"**{pct(avg(overall[30]))}** | **{pct(avg(overall[90]))}** | **{pct(avg(overall[180]))}** | "
+        f"**{pct(avg(overall['hold']))}** |"
     )
     out += [
         "",
-        "→ **比 C@30 vs C@90 vs C@180**:慢熱題材(航運/AI/矽光子)較長持有較好,快題材(口罩/國防)較短較好"
-        " → 證明「固定 30 日出場」太死,出場應依題材時間軸(`themes.json` hold_period)。",
+        "→ **C@hold = 依各題材自己的 `hold_period` 出場**(而非固定天數),是「合理出場」最接近的單一數字;"
+        "對照 C@30(太死)與 C@180,可見配對題材時間軸的價值。`*` = 題材 hold 期超出可得股價、已截斷。",
     ]
     if skipped:
         out += ["", f"> ⚠️ 略過(fetch 失敗,多為 .TWO 上櫃股 yfinance 不穩):{', '.join(sorted(set(skipped)))}"]

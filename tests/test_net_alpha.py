@@ -7,7 +7,9 @@ from polydig_validator.net_alpha import (
     compute_case_ticker,
     compute_ticker_net,
     exit_with_rules,
+    parse_hold_period,
     round_trip_net,
+    theme_aware_net,
 )
 
 
@@ -73,3 +75,24 @@ def test_case_ticker_stop_loss_caps_crash() -> None:
     r = compute_case_ticker(dates, closes, trigger, horizons=(30, 90, 180), stop_loss=-0.20)
     assert r is not None
     assert r["net_C"][180] is not None and r["net_C"][180] > -0.30   # stop bounded the loss
+
+
+def test_parse_hold_period_real_themes() -> None:
+    # the actual hold_period strings from themes.json
+    assert parse_hold_period("1-3 個月(漲快跌也快)") == (30, 90)
+    assert parse_hold_period("6-12 個月") == (180, 360)
+    assert parse_hold_period("1-3 年(主升段)") == (365, 1095)
+    assert parse_hold_period("1-2 年(到 2026/2027 量產主升段)") == (365, 730)  # "1-2", not "2026/2027"
+    assert parse_hold_period("3-6 個月(戰爭越久效應遞減)") == (90, 180)
+    assert parse_hold_period("") is None
+    assert parse_hold_period("沒有數字也沒有單位") is None
+
+
+def test_theme_aware_net_caps_when_hold_exceeds_data() -> None:
+    trigger = date(2020, 1, 20)
+    dates = [date(2020, 1, 10) + timedelta(days=i) for i in range(120)]  # ~110d after trigger
+    closes = [10.0 if d < trigger else 10.0 + (d - trigger).days * 0.05 for d in dates]
+    long_hold = theme_aware_net(dates, closes, trigger, 365)   # 1yr hold, only ~110d data
+    assert long_hold is not None and long_hold["capped"] is True
+    short_hold = theme_aware_net(dates, closes, trigger, 60)   # 60d hold, within data
+    assert short_hold is not None and short_hold["capped"] is False
