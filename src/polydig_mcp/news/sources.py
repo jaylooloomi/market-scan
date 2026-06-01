@@ -183,6 +183,13 @@ def _terms(text: str, lang: str) -> list[str]:
     return [t.lower() for t in _TOKEN_RE.findall(text) if t.lower() not in _EN_STOP]
 
 
+# Sample-size confidence: the article count at which we fully trust the spike
+# ratio. The score is multiplied by min(1, recent_count / FULL_CONFIDENCE_COUNT)
+# so a tiny-sample ratio can't max out the score. Source-scale dependent — should
+# be calibrated by the replay harness (see reports/optimization/01-architect-optimization.md).
+FULL_CONFIDENCE_COUNT = 8
+
+
 def detect_term_spikes(
     items: list[dict[str, Any]],
     window_days: float,
@@ -218,8 +225,12 @@ def detect_term_spikes(
         oc = older.get(term, 0)
         # ratio with smoothing; unbounded when term is brand-new (oc == 0)
         ratio = rc / (oc + 1)
-        # squash into 0..1 anomaly score
-        score = min(1.0, ratio / 5.0)
+        # squash into 0..1, then damp by sample-size confidence: a ratio computed
+        # from very few articles is unreliable (a brand-new term seen 3-4 times off
+        # a ~0 baseline would otherwise score 0.6-0.8 — a false positive on noise,
+        # demonstrated on real GDELT data for 2019-11 "Wuhan pneumonia").
+        vol_conf = min(1.0, rc / FULL_CONFIDENCE_COUNT)
+        score = min(1.0, ratio / 5.0) * vol_conf
         links = recent_links.get(term, [])
         spikes.append(
             {

@@ -17,6 +17,7 @@ from polydig_mcp.common.envelope import Signal, error_signal, now_iso
 from polydig_mcp.common.errors import SensorError
 from polydig_mcp.news.sources import (
     FEEDS,
+    FULL_CONFIDENCE_COUNT,
     Feed,
     detect_term_spikes,
     fetch_feed,
@@ -154,7 +155,8 @@ def detect_news_anomaly(
             try:
                 baseline = db.term_baseline(s["term"], "news", lookback_days=21)
                 cross_week_ratio = s["recent_count"] / (baseline + 1)
-                cross_week_score = min(1.0, cross_week_ratio / 5.0)
+                cw_vol_conf = min(1.0, s["recent_count"] / FULL_CONFIDENCE_COUNT)
+                cross_week_score = min(1.0, cross_week_ratio / 5.0) * cw_vol_conf
                 score = max(score, cross_week_score)
                 db.upsert_term_count(today, s["term"], s["recent_count"], "news")
             except Exception:  # noqa: BLE001
