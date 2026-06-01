@@ -136,7 +136,7 @@ fire     = recent_count >= ABS_FLOOR and ratio >= RATIO_MIN and score >= thresho
 - §2 **replay harness → MVP 已建**(`reviewer/replay.py`,commit `9d11c97`,GDELT DOC volume)+ 離線回歸測試鎖住 COVID 案例。
 
 **🔴 第二輪新發現(必修)**:
-1. **vol_conf 進了線上、`abs_floor` 沒有**:線上 `detect_news_anomaly` 只加了 vol_conf;但 `FULL_CONFIDENCE_COUNT=8` 下 rc=4、baseline≈0 仍得 **0.4 > 0.3** → 在 GDELT 那種規模**仍會誤報**。真正擋掉 11/19 的是 **abs_floor**,而它目前**只在 `replay.py`,沒進線上 sensor**。→ 待辦:把 abs_floor(per-source 校準)也加進線上 `detect_news_anomaly`。
+1. ~~**vol_conf 進了線上、`abs_floor` 沒有**~~ → **✅ 已修(本次 commit)**:`detect_news_anomaly` 現以 `min_recent_count` 作為**顯式、可調的 per-source 絕對量地板**(within-window 與 cross-week 共用,因 cross-week 只處理過了地板的 spikes),附測試 `test_min_recent_count_is_a_tunable_absolute_floor`。RSS 預設維持 **3**(Scout 高假陽性容忍 by design,rc=4 觸發是刻意的廣撒);**高量/聚合來源(GDELT 那種)用 replay harness 校準調高**。GDELT-scale 的 `abs_floor=30` 仍住在 `replay.py`(回放/未來高量源用),兩者現在語意一致、各司其職。
 2. **§2 工期表把「MVP」與「完整 GKG ETL」混在一起**:MVP(DOC TimelineVolRaw)約半小時就建好了;那張「~2 週」是**完整 GKG + jieba 等效**版。應拆成「MVP ✅ 已完成」vs「GKG ETL(~2 週,仍待辦)」。
 3. **`FULL_CONFIDENCE_COUNT=8` 仍是拍的**:現在有 replay harness 了,應**用它跑多個事件(COVID/航運/AI)校準** vol_conf 與 abs_floor,別沿用 8。
 

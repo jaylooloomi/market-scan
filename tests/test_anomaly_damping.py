@@ -56,3 +56,13 @@ def test_vol_conf_is_monotonic_in_sample_size() -> None:
     # same (brand-new) baseline, more articles → higher score, up to saturation
     assert _expected(8, 0) > _expected(4, 0)
     assert _expected(20, 0) >= _expected(8, 0)
+
+
+def test_min_recent_count_is_a_tunable_absolute_floor() -> None:
+    """The absolute-volume floor (min_recent_count) gates low-count terms and is
+    tunable per source — RSS default 3, raise it for high-volume sources (replay)."""
+    items = _build(recent={"lowvol": 4, "highvol": 8}, older={})
+    default = {s["term"] for s in detect_term_spikes(items, window_days=1.0)}
+    assert {"lowvol", "highvol"} <= default                   # default floor 3: both pass
+    raised = {s["term"] for s in detect_term_spikes(items, window_days=1.0, min_recent_count=6)}
+    assert "lowvol" not in raised and "highvol" in raised     # floor 6 gates the 4-count term

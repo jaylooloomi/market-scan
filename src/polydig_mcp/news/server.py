@@ -104,6 +104,7 @@ def fetch_news(
 def detect_news_anomaly(
     window_days: float = 1.0,
     threshold: float = 0.3,
+    min_recent_count: int = 3,
     source: str | None = None,
     max_terms: int = 30,
     db_path: str | None = None,
@@ -118,6 +119,13 @@ def detect_news_anomaly(
       SQLite). The reported anomaly_score is the max of the within-window and
       cross-week scores, so a slow build-up over weeks is caught too. Today's
       counts are persisted for future baselines (builds up over daily runs).
+
+    `min_recent_count` is the per-source ABSOLUTE-VOLUME floor: a term must appear
+    at least this many times in the window to be a candidate at all (applied to
+    both the within-window and cross-week paths). Default 3 suits RSS (the Scout is
+    high-false-positive-tolerant by design); raise it for high-volume / aggregated
+    sources — calibrate via the replay harness (`reviewer/replay.py`), which is
+    where the GDELT-scale floor (abs_floor) lives.
     """
     feeds = _selected_feeds(source)
     if not feeds:
@@ -131,7 +139,7 @@ def detect_news_anomaly(
         except SensorError as e:
             errors.append(error_signal("news." + feed.id, "news_anomaly", e.message))
 
-    spikes = detect_term_spikes(all_items, window_days=window_days)
+    spikes = detect_term_spikes(all_items, window_days=window_days, min_recent_count=min_recent_count)
 
     # Optional cross-week baseline via the SQLite term_history store.
     db = None
