@@ -53,8 +53,13 @@ via `uvx`, so you need [`uv`](https://docs.astral.sh/uv/) on your PATH (one
 self-contained binary). On first use, `uvx` builds PolyDig + deps into a cached
 ephemeral env — **no manual `pip`, no PyPI account needed**.
 
-- **No `uv`?** Install it (one line), or use local dev (B) and point `.mcp.json` at
-  `python -m polydig_mcp.<x>.server`.
+- **No `uv`?** Easiest: after installing the plugin, run **`/polydig-setup`** — it
+  checks for `uv`, installs it (with your OK), and pre-warms the sensors. Or install manually:
+  - macOS/Linux: `curl -LsSf https://astral.sh/uv/install.sh | sh`
+  - Windows: `powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"`
+  - then **restart Claude Code** (MCP servers read `PATH` at startup, so a freshly-installed
+    `uv` is only picked up after a restart).
+  - Or skip `uv` entirely: use local dev (B) and point `.mcp.json` at `python -m polydig_mcp.<x>.server`.
 - **FinMind token optional:** FRED / TWSE / RSS / **crash-watch** sensors work with
   zero config; only the FinMind-backed tools (法人進出/報價/量能) need a token.
 
