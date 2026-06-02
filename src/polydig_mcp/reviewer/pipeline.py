@@ -83,6 +83,13 @@ def collect_signals(
     except Exception as e:  # noqa: BLE001
         signals.append({"source": "price", "signal_type": "error", "content": {"error": str(e)}})
 
+    # ── Crash-watch: market-level risk-off confluence (downside North Star) ──
+    try:
+        from polydig_mcp.data import server as data
+        signals.append(data.get_crash_watch())
+    except Exception as e:  # noqa: BLE001
+        signals.append({"source": "data.crashwatch", "signal_type": "error", "content": {"error": str(e)}})
+
     return signals
 
 
@@ -182,7 +189,16 @@ def run_daily(
         except Exception as exc:  # noqa: BLE001
             log.warning("storage persistence failed: %s", exc)  # must not abort the run
 
-    report_md = generate_report(verdicts, report_date=report_date, missed_clusters=missed or None)
+    # Crash-watch banner (macro risk-off confluence) — surfaced in the report header,
+    # not promoted to a theme candidate (signals_to_candidates skips it).
+    market_risk = next(
+        (s.get("content") for s in signals
+         if s.get("signal_type") == "risk_off_confluence" and "error" not in (s.get("content") or {})),
+        None,
+    )
+    report_md = generate_report(
+        verdicts, report_date=report_date, missed_clusters=missed or None, market_risk=market_risk
+    )
 
     return {
         "signals": signals,
