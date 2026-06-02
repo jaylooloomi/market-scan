@@ -113,6 +113,7 @@ def generate_report(
     *,
     report_date: date | None = None,
     missed_clusters: list[dict[str, Any]] | None = None,
+    market_risk: dict[str, Any] | None = None,
 ) -> str:
     report_date = report_date or date.today()
     by_grade = {"strong": [], "watchlist": [], "reject": []}
@@ -127,6 +128,19 @@ def generate_report(
         f"**摘要**：強訊號 {len(by_grade['strong'])} · 觀察清單 {len(by_grade['watchlist'])} · 駁回 {len(by_grade['reject'])}",
         "",
     ]
+
+    # ── 大盤風險橫幅(crash-watch / downside North Star)──────────────────────
+    if market_risk and "error" not in market_risk:
+        _risk_label = {
+            "calm": "🟢 平穩", "caution": "🟡 留意(部分壓力指標亮燈)", "risk_off": "🔴 風險升高",
+        }.get(market_risk.get("state"), str(market_risk.get("state")))
+        _stressed = "、".join(market_risk.get("stressed", [])) or "無"
+        out += [
+            f"**今日大盤風險(crash-watch):{_risk_label}** "
+            f"({market_risk.get('n_stressed', 0)}/{market_risk.get('total', 0)} 指標亮燈:{_stressed})"
+            " — de-risk 警示、非崩盤預測;見 docs/research/02-crash-precursors.md",
+            "",
+        ]
 
     out.append("## 🟢 今日強訊號")
     out.append("")

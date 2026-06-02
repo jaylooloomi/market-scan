@@ -58,22 +58,42 @@ def assess_indicators(
     return ind
 
 
-def assess_confluence(indicators: dict[str, Any], threshold: int = 2) -> dict[str, Any]:
-    """Pure: count stressed indicators → state. `threshold` MUST be calibrated OOS."""
+def assess_confluence(
+    indicators: dict[str, Any], threshold: int = 2, require_credit: bool = True
+) -> dict[str, Any]:
+    """Pure: count stressed indicators → state. `threshold` MUST be calibrated OOS.
+
+    `require_credit` (default True) encodes the deep-research finding (docs/research/
+    03-crash-precursors-verified.md) that the CREDIT SPREAD dominates the yield curve
+    and that an inversion ALONE is insufficient — the 2022-23 inversion produced no
+    recession precisely because credit never widened. So when a credit indicator is
+    present, `risk_off` additionally requires it to be stressed; otherwise the most we
+    report is `caution`. (If the credit series failed to fetch, we do NOT block, to
+    avoid a data gap silently suppressing a real signal.)
+    """
     stressed = [k for k, v in indicators.items() if v.get("stressed")]
     n, total = len(stressed), len(indicators)
-    state = "risk_off" if n >= threshold else ("caution" if n >= 1 else "calm")
+    credit_present = "credit_spread_stress" in indicators
+    credit_confirmed = (not require_credit) or (not credit_present) or ("credit_spread_stress" in stressed)
+    if n >= threshold and credit_confirmed:
+        state = "risk_off"
+    elif n >= 1:
+        state = "caution"
+    else:
+        state = "calm"
     return {
         "state": state,
         "n_stressed": n,
         "total": total,
         "stressed": stressed,
+        "credit_confirmed": credit_confirmed,
         "score": round(n / total, 3) if total else 0.0,
         "threshold": threshold,
+        "require_credit": require_credit,
     }
 
 
-def crash_watch_signal(days: int = 120, threshold: int = 2) -> dict[str, Any]:
+def crash_watch_signal(days: int = 120, threshold: int = 2, require_credit: bool = True) -> dict[str, Any]:
     """Fetch the FRED stress series and assess risk-off confluence.
 
     Returns confluence + per-indicator detail. Each FRED fetch failure degrades to
@@ -95,7 +115,7 @@ def crash_watch_signal(days: int = 120, threshold: int = 2) -> dict[str, Any]:
     hy_min = min((v for _, v in hy_s), default=None)
 
     indicators = assess_indicators(latest(yc_s), latest(hy_s), hy_min, latest(vix_s))
-    conf = assess_confluence(indicators, threshold=threshold)
+    conf = assess_confluence(indicators, threshold=threshold, require_credit=require_credit)
     as_of = next((s[-1][0].isoformat() for s in (yc_s, hy_s, vix_s) if s), None)
     return {
         **conf,

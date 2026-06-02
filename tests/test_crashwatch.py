@@ -37,3 +37,17 @@ def test_missing_indicators_are_skipped() -> None:
     assert "yield_curve_inverted" not in ind and "vix_elevated" not in ind
     c = assess_confluence(ind, threshold=2)
     assert c["total"] == 1 and c["n_stressed"] == 1 and c["state"] == "caution"
+
+
+def test_risk_off_requires_credit_confirmation() -> None:
+    """Deep-research: inversion ALONE is insufficient (the 2022-23 false positive) —
+    credit must confirm. yield-curve + VIX stressed but credit calm -> caution, not risk_off."""
+    ind = assess_indicators(yc=-0.5, hy_latest=3.0, hy_min=3.0, vix=30.0)  # yc+vix, credit NOT
+    c = assess_confluence(ind, threshold=2, require_credit=True)
+    assert c["n_stressed"] == 2 and c["credit_confirmed"] is False
+    assert c["state"] == "caution"                              # credit didn't confirm -> not risk_off
+    # credit stressed too -> risk_off
+    ind2 = assess_indicators(yc=-0.5, hy_latest=6.0, hy_min=3.0, vix=30.0)
+    assert assess_confluence(ind2, threshold=2, require_credit=True)["state"] == "risk_off"
+    # require_credit=False reverts to pure count
+    assert assess_confluence(ind, threshold=2, require_credit=False)["state"] == "risk_off"

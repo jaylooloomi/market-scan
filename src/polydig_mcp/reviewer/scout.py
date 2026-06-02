@@ -98,6 +98,9 @@ def signals_to_candidates(
         stype = sig.get("signal_type")
         score = sig.get("anomaly_score")
 
+        if stype == "risk_off_confluence":
+            continue  # macro risk-off banner — surfaced in report header, not a theme candidate
+
         if stype == "us_sector_move":
             raw.extend(us_signal_to_tw_candidates(sig))
             continue
