@@ -3,23 +3,23 @@
   "mcpServers": {
     "polydig-news": {
       "command": "uvx",
-      "args": ["--from", "git+https://github.com/jaylooloomi/polydig", "polydig-news-mcp"]
+      "args": ["--from", "git+https://github.com/jaylooloomi/market-scan", "polydig-news-mcp"]
     },
     "polydig-data": {
       "command": "uvx",
-      "args": ["--from", "git+https://github.com/jaylooloomi/polydig", "polydig-data-mcp"]
+      "args": ["--from", "git+https://github.com/jaylooloomi/market-scan", "polydig-data-mcp"]
     },
     "polydig-price": {
       "command": "uvx",
-      "args": ["--from", "git+https://github.com/jaylooloomi/polydig", "polydig-price-mcp"]
+      "args": ["--from", "git+https://github.com/jaylooloomi/market-scan", "polydig-price-mcp"]
     },
     "polydig-policy": {
       "command": "uvx",
-      "args": ["--from", "git+https://github.com/jaylooloomi/polydig", "polydig-policy-mcp"]
+      "args": ["--from", "git+https://github.com/jaylooloomi/market-scan", "polydig-policy-mcp"]
     },
     "polydig-roadmap": {
       "command": "uvx",
-      "args": ["--from", "git+https://github.com/jaylooloomi/polydig", "polydig-roadmap-mcp"]
+      "args": ["--from", "git+https://github.com/jaylooloomi/market-scan", "polydig-roadmap-mcp"]
     }
   }
 }

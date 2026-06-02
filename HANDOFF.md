@@ -49,8 +49,8 @@
 
 | 項目 | 值 |
 |---|---|
-| 專案名稱 | **PolyDig** |
-| GitHub | https://github.com/jaylooloomi/polydig |
+| 專案名稱 | **Market Scan** (前身 PolyDig) |
+| GitHub | https://github.com/jaylooloomi/market-scan |
 | Working dir | `D:\git\harness-run\polydig\` (Windows / git-bash 環境) |
 | Owner | Arthur (jaylooloomi, arthurwang@think4u-tech.com) |
 | License | MIT |
@@ -96,7 +96,7 @@
 | Phase 0 跑通 15 個測試點 | ✅ | `reports/2026-05-31_validator/` |
 | Phase 0 GO 決策報告 | ✅ | `docs/superpowers/specs/2026-05-31-phase-0-results.md` |
 | Phase 0 plan | ✅ | `docs/superpowers/plans/2026-05-31-phase-0-validator-plan.md` |
-| Repo + git push | ✅ | https://github.com/jaylooloomi/polydig |
+| Repo + git push | ✅ | https://github.com/jaylooloomi/market-scan |
 | FinMind token | ✅ | `.env` (gitignored, NEVER commit) |
 
 **Phase 0 結果摘要**：15 個測試點 = 6 STRONG / 5 WEAK / 3 TOO_LATE / 1 NULL。**4/5 cases 有強領先訊號 → ✅ GO**。

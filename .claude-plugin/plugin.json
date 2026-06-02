@@ -1,12 +1,12 @@
 {
-  "name": "polydig",
+  "name": "market-scan",
   "version": "0.1.0",
-  "description": "PolyDig — leading-edge Taiwan-stock theme detection. Surfaces emerging themes before the market reacts, with causal-tree reasoning and historical analogues. Research assistant, not auto-trading.",
+  "description": "Market Scan — leading-edge Taiwan-stock theme detection + market crash-watch. Surfaces emerging themes before the market reacts (causal-tree reasoning + historical analogues), and flags market-wide risk-off conditions. Research assistant, not auto-trading.",
   "author": {
     "name": "Arthur",
     "url": "https://github.com/jaylooloomi"
   },
-  "homepage": "https://github.com/jaylooloomi/polydig",
+  "homepage": "https://github.com/jaylooloomi/market-scan",
   "license": "MIT",
-  "keywords": ["taiwan-stocks", "finance", "research", "signals", "mcp"]
+  "keywords": ["taiwan-stocks", "finance", "research", "signals", "crash-watch", "mcp"]
 }

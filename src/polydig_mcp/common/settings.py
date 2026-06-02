@@ -50,7 +50,7 @@ def get_settings() -> Settings:
         http_timeout=float(os.getenv("POLYDIG_HTTP_TIMEOUT", "15")),
         user_agent=os.getenv(
             "POLYDIG_USER_AGENT",
-            "PolyDig/0.1 (+https://github.com/jaylooloomi/polydig) research-assistant",
+            "Market-Scan/0.1 (+https://github.com/jaylooloomi/market-scan) research-assistant",
         ),
         telegram_bot_token=os.getenv("TELEGRAM_BOT_TOKEN"),
         telegram_chat_id=os.getenv("TELEGRAM_CHAT_ID"),

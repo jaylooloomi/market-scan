@@ -1,16 +1,16 @@
 {
-  "name": "polydig",
+  "name": "market-scan",
   "owner": {
     "name": "Arthur",
     "url": "https://github.com/jaylooloomi"
   },
   "metadata": {
-    "description": "PolyDig marketplace — Taiwan-stock leading-edge theme detection + market crash-watch.",
+    "description": "Market Scan marketplace — Taiwan-stock leading-edge theme detection + market crash-watch.",
     "version": "0.1.0"
   },
   "plugins": [
     {
-      "name": "polydig",
+      "name": "market-scan",
       "source": "./",
       "description": "台股題材早期偵測 + 崩盤守望:5 個 MCP 感測器(news/data/price/policy/roadmap)+ crash-watch(殖利率曲線/信用利差/VIX)+ Scout/Reviewer 因果樹推理 + 歷史對應。研究助理,非投資建議。",
       "version": "0.1.0"
