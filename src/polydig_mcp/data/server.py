@@ -245,6 +245,26 @@ def get_dram_price() -> dict[str, Any]:
 
 
 @mcp.tool()
+def get_history_match(query: str, n_results: int = 3) -> dict[str, Any]:
+    """Retrieve the most similar historical themes (themes.json) for the Reviewer's
+    歷史對應 step. Loads the bundled seed DB via the INSTALLED PACKAGE (not a CWD
+    file path), so it works after a marketplace install regardless of working dir.
+    Offline-capable (token-overlap fallback when Chroma isn't installed).
+    """
+    try:
+        from polydig_mcp.history.store import ThemeStore
+        matches = [m.to_dict() for m in ThemeStore().query(query, n_results=n_results)]
+    except Exception as e:  # noqa: BLE001
+        return error_signal("data.history", "history_match", str(e), query=query)
+    return Signal(
+        source="data.history",
+        signal_type="history_match",
+        content={"query": query, "matches": matches},
+        anomaly_score=None,
+    ).to_dict()
+
+
+@mcp.tool()
 def get_crash_watch(days: int = 120, threshold: int = 2) -> dict[str, Any]:
     """Risk-off confluence from FRED structural-stress indicators — DOWNSIDE sensor.
 
