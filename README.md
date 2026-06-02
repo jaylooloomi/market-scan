@@ -39,19 +39,40 @@ catching what the leading sensors missed.)
 
 ## Install
 
-```bash
-pip install -e .                 # core (sensors + headless pipeline)
-pip install -e ".[agents]"       # + anthropic + chromadb (vector RAG, LLM reviewer)
+### A. From the Claude Code marketplace (for users — recommended)
+
+```text
+/plugin marketplace add jaylooloomi/polydig
+/plugin install polydig@polydig
+/reload-plugins
 ```
 
-Create `.env` (gitignored) for the FinMind data token (free, 600 req/hr — register at finmindtrade.com):
+Installs the `polydig-daily` skill, the `/dig` command, the Scout/Reviewer agents,
+and the 5 MCP sensor servers. **Requirement:** the sensors run as Python MCP servers
+via `uvx`, so you need [`uv`](https://docs.astral.sh/uv/) on your PATH (one
+self-contained binary). On first use, `uvx` builds PolyDig + deps into a cached
+ephemeral env — **no manual `pip`, no PyPI account needed**.
+
+- **No `uv`?** Install it (one line), or use local dev (B) and point `.mcp.json` at
+  `python -m polydig_mcp.<x>.server`.
+- **FinMind token optional:** FRED / TWSE / RSS / **crash-watch** sensors work with
+  zero config; only the FinMind-backed tools (法人進出/報價/量能) need a token.
+
+### B. Local / development
+
+```bash
+pip install -e ".[schedule,dev]"   # core + apscheduler + pytest
+pip install -e ".[agents]"         # + anthropic + chromadb (vector RAG, LLM reviewer)
+```
+
+Create `.env` (gitignored) for the FinMind token (free, 600 req/hr — register at finmindtrade.com):
 
 ```
 FINMIND_TOKEN=your_token_here
 ```
 
 Without a token the FinMind-backed tools return a graceful `missing_token` signal; the
-RSS / FRED / TWSE sensors still work.
+RSS / FRED / TWSE / crash-watch sensors still work.
 
 ## Use it (two ways)
 
