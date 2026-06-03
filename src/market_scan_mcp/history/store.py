@@ -7,14 +7,13 @@ embedding model download. Same query() interface either way.
 from __future__ import annotations
 
 import json
-import re
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+from market_scan_mcp.common.tokenize import tokenize
+
 _THEMES_PATH = Path(__file__).with_name("themes.json")
-_CJK_RUN = re.compile(r"[一-鿿]+")
-_LATIN = re.compile(r"[A-Za-z0-9]{2,}")
 
 
 def load_themes() -> list[dict[str, Any]]:
@@ -31,21 +30,6 @@ def theme_document(theme: dict[str, Any]) -> str:
     for h in theme.get("historical_analogue", []):
         parts.append(h.get("event", ""))
     return " ".join(p for p in parts if p)
-
-
-def _tokens(text: str) -> set[str]:
-    """Latin words + CJK character bigrams (standard cheap Chinese retrieval).
-
-    Bigrams keep query/doc vocab aligned: '航運三雄' -> {航運, 運三, 三雄} so a
-    query '航運' still matches. Single chars added for short runs.
-    """
-    out = {t.lower() for t in _LATIN.findall(text)}
-    for run in _CJK_RUN.findall(text):
-        if len(run) == 1:
-            out.add(run)
-        else:
-            out.update(run[i : i + 2] for i in range(len(run) - 1))
-    return out
 
 
 @dataclass
@@ -115,10 +99,10 @@ class ThemeStore:
         return self._fallback_query(text, n_results)
 
     def _fallback_query(self, text: str, n_results: int) -> list[Match]:
-        q = _tokens(text)
+        q = tokenize(text)
         scored: list[Match] = []
         for tid, doc in self._docs.items():
-            d = _tokens(doc)
+            d = tokenize(doc)
             if not d:
                 continue
             overlap = len(q & d)

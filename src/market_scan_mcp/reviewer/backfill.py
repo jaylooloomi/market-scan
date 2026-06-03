@@ -15,6 +15,8 @@ from __future__ import annotations
 from datetime import date, timedelta
 from typing import TYPE_CHECKING, Any
 
+from market_scan_mcp.common.tokenize import tokenize
+
 if TYPE_CHECKING:
     from market_scan_mcp.storage.db import MarketScanDB
 
@@ -65,10 +67,10 @@ def run_backfill(
     prior_signals = db.query_signals(since=since, limit=500)
 
     # Score each prior signal for relevance to the industry/members
-    industry_tokens = _tokenise(industry)
+    industry_tokens = tokenize(industry)
     member_tokens: set[str] = set()
     for name in member_names:
-        member_tokens |= _tokenise(name)
+        member_tokens |= tokenize(name)
 
     for sig in prior_signals:
         content = sig.get("content", {})
@@ -79,7 +81,7 @@ def run_backfill(
             continue
         # Check keyword overlap with content text
         content_text = _content_to_text(content)
-        sig_tokens = _tokenise(content_text)
+        sig_tokens = tokenize(content_text)
         overlap = (industry_tokens | member_tokens) & sig_tokens
         if overlap:
             leading_signals.append({
@@ -130,22 +132,6 @@ def run_backfill(
 
 
 # ── helpers ──────────────────────────────────────────────────────────────────
-
-import re as _re
-
-_CJK = _re.compile(r"[一-鿿]+")
-_LATIN = _re.compile(r"[A-Za-z0-9]{2,}")
-
-
-def _tokenise(text: str) -> set[str]:
-    """CJK bigram + Latin word tokeniser (same as store.py)."""
-    out = {t.lower() for t in _LATIN.findall(text)}
-    for run in _CJK.findall(text):
-        if len(run) == 1:
-            out.add(run)
-        else:
-            out.update(run[i : i + 2] for i in range(len(run) - 1))
-    return out
 
 
 def _content_to_text(content: dict[str, Any]) -> str:
