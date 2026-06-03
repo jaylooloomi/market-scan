@@ -13,8 +13,8 @@ from datetime import date, timedelta
 sys.path.insert(0, "src")
 sys.stdout.reconfigure(encoding="utf-8")
 
-from polydig_mcp.data.shipping import detect_index_anomaly
-from polydig_mcp.data import server as d
+from market_scan_mcp.data.shipping import detect_index_anomaly
+from market_scan_mcp.data import server as d
 
 
 def main() -> int:
@@ -54,7 +54,7 @@ def main() -> int:
     # Live: the free dry-bulk freight complex auto-scrapes East Money
     # (best-effort — skip cleanly if offline). Container SCFI is login-gated → ingest only.
     try:
-        from polydig_mcp.data.shipping import EASTMONEY_INDICATORS, fetch_eastmoney_index
+        from market_scan_mcp.data.shipping import EASTMONEY_INDICATORS, fetch_eastmoney_index
         for idx in EASTMONEY_INDICATORS:
             live = fetch_eastmoney_index(idx, limit=10)
             print(f"live East Money {idx}: {len(live)} points, latest={live[-1]}")
@@ -64,7 +64,7 @@ def main() -> int:
 
     # Live: SCFI (container) direction/momentum from FREE Google News RSS
     try:
-        from polydig_mcp.data.shipping import fetch_scfi_news_signal
+        from market_scan_mcp.data.shipping import fetch_scfi_news_signal
         scfi = fetch_scfi_news_signal()
         print(f"live SCFI news signal: dir={scfi['direction']} streak={scfi['streak']} "
               f"pct={scfi['pct_move']} score={scfi['anomaly_score']} ({len(scfi['headlines'])} headlines)")

@@ -12,11 +12,11 @@ import sys
 sys.path.insert(0, "src")
 sys.stdout.reconfigure(encoding="utf-8")
 
-from polydig_mcp.reviewer.scout import signals_to_candidates, us_signal_to_tw_candidates
+from market_scan_mcp.reviewer.scout import signals_to_candidates, us_signal_to_tw_candidates
 
 
 def make_us_signal(sector: str, pct: float) -> dict:
-    from polydig_mcp.data.macro import US_TW_MAPPING
+    from market_scan_mcp.data.macro import US_TW_MAPPING
     return {
         "source": "data.us_sector",
         "signal_type": "us_sector_move",
@@ -39,7 +39,7 @@ def main() -> int:
     # ── 1. Direct helper test ─────────────────────────────────────────────
     # NASDAQ carries the semi/AI families (PHLX/SOX has no keyless FRED feed,
     # so it was removed from US_TW_MAPPING — semis ride nasdaq instead).
-    from polydig_mcp.data.macro import US_TW_MAPPING
+    from market_scan_mcp.data.macro import US_TW_MAPPING
     sig_strong = make_us_signal("nasdaq", 0.12)  # +12% NASDAQ
     cands = us_signal_to_tw_candidates(sig_strong)
     print(f"NASDAQ +12% → {len(cands)} TW candidates:")

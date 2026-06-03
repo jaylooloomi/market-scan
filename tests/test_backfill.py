@@ -15,15 +15,15 @@ from pathlib import Path
 sys.path.insert(0, "src")
 sys.stdout.reconfigure(encoding="utf-8")
 
-from polydig_mcp.storage.db import PolyDigDB
-from polydig_mcp.reviewer.backfill import run_backfill
+from market_scan_mcp.storage.db import MarketScanDB
+from market_scan_mcp.reviewer.backfill import run_backfill
 
 
 def main() -> int:
     print("=== Gap 6: Missed-catch Backfill ===\n")
 
     with tempfile.TemporaryDirectory() as tmpdir:
-        db = PolyDigDB(Path(tmpdir) / "backfill_test.db")
+        db = MarketScanDB(Path(tmpdir) / "backfill_test.db")
 
         # ── Seed trailing signals 45 days ago ────────────────────────────
         trailing_date = (date.today() - timedelta(days=45)).isoformat()

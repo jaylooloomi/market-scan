@@ -1,6 +1,6 @@
 # 口罩股 net-alpha 試算(finance P0 實作成果)
 
-**日期**:2026-06-01 ｜ **工具**:`polydig_validator/net_alpha.py`(`python -m polydig_validator.net_alpha`)
+**日期**:2026-06-01 ｜ **工具**:`market_scan_validator/net_alpha.py`(`python -m market_scan_validator.net_alpha`)
 **trigger**:2020-01-20(鍾南山證實人傳人,可行動的 mid trigger)｜ **資料**:yfinance 真實歷史價
 
 > 回應金融分析師 review 的 P0:「+310% 是**毛報酬**、T-1 收盤進場、無成本、無出場——**淨的、買得到的**是多少?」

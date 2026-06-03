@@ -35,7 +35,7 @@
 
 **🔑 「倒掛不充分」有量化必要性條件(Chatterjee et al. 2024)。**
 1973–2023 樣本:控制殖利率斜率後,**還需「房價下跌」且「企業信用利差顯著走闊」**,衰退前才較可靠出現。→ 這正好**解釋 2022-23 為何史上最長倒掛(500+ 天)卻沒衰退**:很可能因為**信用利差當時並未走闊**(缺第二、三個條件)。
-→ **本發現直接驅動了 crash-watch 感測器的升級**:`require_credit=True`——倒掛 + VIX 亮但**信用沒走闊** → 只報 `caution`,不報 `risk_off`(見 `src/polydig_mcp/data/crashwatch.py`)。
+→ **本發現直接驅動了 crash-watch 感測器的升級**:`require_credit=True`——倒掛 + VIX 亮但**信用沒走闊** → 只報 `caution`,不報 `risk_off`(見 `src/market_scan_mcp/data/crashwatch.py`)。
 
 ---
 

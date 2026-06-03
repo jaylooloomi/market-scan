@@ -18,11 +18,11 @@ from mcp.client.stdio import stdio_client
 # Each (tool, args) exercises the network path (requests-based now — yfinance was
 # removed from the server path because curl_cffi corrupts the stdio transport).
 SERVERS = {
-    "polydig-news": (["-m", "polydig_mcp.news.server"], "fetch_news", {"source": "udn-money", "limit": 3}),
-    "polydig-data": (["-m", "polydig_mcp.data.server"], "get_commodity_price", {"commodity": "crude"}),
-    "polydig-price": (["-m", "polydig_mcp.price.server"], "get_quote", {"symbol": "2330"}),
-    "polydig-policy": (["-m", "polydig_mcp.policy.server"], "list_policy_sources", {}),
-    "polydig-roadmap": (["-m", "polydig_mcp.roadmap.server"], "parse_earnings_call",
+    "market-scan-news": (["-m", "market_scan_mcp.news.server"], "fetch_news", {"source": "udn-money", "limit": 3}),
+    "market-scan-data": (["-m", "market_scan_mcp.data.server"], "get_commodity_price", {"commodity": "crude"}),
+    "market-scan-price": (["-m", "market_scan_mcp.price.server"], "get_quote", {"symbol": "2330"}),
+    "market-scan-policy": (["-m", "market_scan_mcp.policy.server"], "list_policy_sources", {}),
+    "market-scan-roadmap": (["-m", "market_scan_mcp.roadmap.server"], "parse_earnings_call",
                         {"text": "我們看到 HBM4 供不應求,CoWoS 擴產,800G 升級到 1.6T", "company": "TSMC"}),
 }
 

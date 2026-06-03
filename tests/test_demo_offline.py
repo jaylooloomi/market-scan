@@ -16,9 +16,9 @@ import sys
 sys.path.insert(0, "src")
 sys.stdout.reconfigure(encoding="utf-8")
 
-from polydig_mcp.daily_cli import demo_signals
-from polydig_mcp.history.store import ThemeStore
-from polydig_mcp.reviewer.pipeline import run_daily
+from market_scan_mcp.daily_cli import demo_signals
+from market_scan_mcp.history.store import ThemeStore
+from market_scan_mcp.reviewer.pipeline import run_daily
 
 
 def main() -> int:
@@ -50,7 +50,7 @@ def main() -> int:
     # Check report
     md = result["report_md"]
     assert len(md) > 200, f"report too short ({len(md)} chars)"
-    assert "PolyDig 每日研究報告" in md, "report missing header"
+    assert "Market Scan 每日研究報告" in md, "report missing header"
     assert "因果樹" in md, "report missing causal tree section"
 
     # At least one verdict should have a non-empty causal tree

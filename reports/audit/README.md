@@ -1,4 +1,4 @@
-# PolyDig — 全專案審查（架構師 + VC 雙視角）
+# Market Scan — 全專案審查（架構師 + VC 雙視角）
 
 **日期**：2026-06-01 ｜ **commit**：`1d122ce` ｜ **範圍**：54 個 Python 檔 / 4,645 行 + 全部 docs/configs/data/tests 逐檔閱讀
 
@@ -18,7 +18,7 @@
 4. **🟠 護城河目前是空的**（VC §3）：MIT 開源（程式無護城河）+ 22 個可重建的題材。唯一會複利的是「線上前瞻語料」，但 DB 還沒開始累積。
 5. **🟠 投顧法風險 + 無商業模式**（VC §4、§6）：對公眾薦股在台灣受《證投信顧法》規管；商業化前需法遵釐清。
 
-**最高槓桿、近乎免費的下一步**：`polydig-daily --db ./polydig.db` 每天跑，累積 out-of-sample 前瞻紀錄，6–12 個月後量 spec §10 的線上指標。這同時解鎖「核心賭注驗證」與「護城河計時器」。
+**最高槓桿、近乎免費的下一步**：`market-scan-daily --db ./market-scan.db` 每天跑，累積 out-of-sample 前瞻紀錄，6–12 個月後量 spec §10 的線上指標。這同時解鎖「核心賭注驗證」與「護城河計時器」。
 
 ---
 
@@ -42,9 +42,9 @@
 | H5 db docstring 去除過度 thread-safe 宣稱 · H6 版本改由 metadata 單一來源 | ✅ | `__version__` 解析 OK |
 | **測試改寫成 pytest**（含新 test_metrics）+ CI 改用 `pytest` | ✅ | — |
 | **NEW**：補先前無測試的純邏輯模組（envelope/errors/settings、telegram、finmind 缺 token 路徑、prompt builders）→ `test_common`、`test_telegram`、`test_finmind_prompt` | ✅ | `python -m pytest` → **13 passed** |
-| **NEW bug**：補上漏註冊的 `polydig-daily` script entry（docs 全程叫它,但 pyproject 沒註冊→指令根本不存在）+ 加 `polydig-metrics` | ✅ | `polydig-daily --help` 可執行 |
-| **NEW**：建 spec §10 量測工具 `reviewer/metrics.py`（signal_volume 立即可用；hit_rate 接 FinMind 價格源 `--prices finmind`）+ `test_metrics.py` | ✅ | `polydig-metrics` 輸出 dashboard、graceful |
-| **驗證（都要正確）**：`polydig-daily --demo` 端到端產出正確報告（強訊號/因果樹/研究報告皆在）；policy `mohw` RSS 實測**真的可用**（text/xml,20 則）→ 更新「待驗證」註記 | ✅ | demo 2740 字報告、mohw bozo=False |
+| **NEW bug**：補上漏註冊的 `market-scan-daily` script entry（docs 全程叫它,但 pyproject 沒註冊→指令根本不存在）+ 加 `market-scan-metrics` | ✅ | `market-scan-daily --help` 可執行 |
+| **NEW**：建 spec §10 量測工具 `reviewer/metrics.py`（signal_volume 立即可用；hit_rate 接 FinMind 價格源 `--prices finmind`）+ `test_metrics.py` | ✅ | `market-scan-metrics` 輸出 dashboard、graceful |
+| **驗證（都要正確）**：`market-scan-daily --demo` 端到端產出正確報告（強訊號/因果樹/研究報告皆在）；policy `mohw` RSS 實測**真的可用**（text/xml,20 則）→ 更新「待驗證」註記 | ✅ | demo 2740 字報告、mohw bozo=False |
 | **BONUS**：發現並修好真實掛掉的 RSS（自由財經 feed 改 `news.ltn.com.tw/rss/business.xml`） | ✅ | 實測 6/6 feeds OK |
 
 **無法由我完成（需時間/資料/創辦人決策）**：
@@ -71,7 +71,7 @@
 
 ### Iteration 3（2026-06-01）— done（評測可信度 + 競品）
 - ✅ **實證 M2**：`keyword_hit` criterion 恆為 True（候選 hint 全是主題名本身；控制組驗證）；asserted recall 實為 **3/5**（非 iter-1 誤寫的 5/5），且 3/5 完全由 RAG sim≥0.2 gate 決定、靠匹配**別的**主題；`recall_at_k`=5/5 是循環自我檢索。→ 兩指標都量不到 spec §10 宣稱的「還原正確題材」。已改寫 architect-review M2。
-- ✅ **競品定性對照表**：加入 vc-analysis §5（MacroMicro/CMoney/XQ/Fugle/投顧/通用LLM），點出 PolyDig 的四合一白地與「通用 LLM 是最大替代威脅」。
+- ✅ **競品定性對照表**：加入 vc-analysis §5（MacroMicro/CMoney/XQ/Fugle/投顧/通用LLM），點出 Market Scan 的四合一白地與「通用 LLM 是最大替代威脅」。
 
 ### Iteration 4（2026-06-01）— done（docs 一致性 + TAM；達成 100% 檔案覆蓋）
 - ✅ 讀完最後 8 個未讀文件（docs/{routine-setup,scheduling,zh-tw}、4 個 sensor README、phase-0 plan）→ **repo 100% 逐檔覆蓋**

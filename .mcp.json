@@ -1,25 +1,25 @@
 {
-  "_comment": "Plugin MCP servers. Launched via `uvx --from git+<repo>` so a marketplace install just needs `uv` on PATH — uv builds polydig + deps into an ephemeral, cached env at first launch (no manual pip, no PyPI publish required). LOCAL DEV: `pip install -e .` then swap a server to {\"command\":\"python\",\"args\":[\"-m\",\"polydig_mcp.news.server\"]} to test working-tree code instead of the pushed version. FinMind token optional (.env); FRED/TWSE/RSS/crash-watch work without it.",
+  "_comment": "Plugin MCP servers. Launched via `uvx --from git+<repo>` so a marketplace install just needs `uv` on PATH — uv builds market-scan + deps into an ephemeral, cached env at first launch (no manual pip, no PyPI publish required). LOCAL DEV: `pip install -e .` then swap a server to {\"command\":\"python\",\"args\":[\"-m\",\"market_scan_mcp.news.server\"]} to test working-tree code instead of the pushed version. FinMind token optional (.env); FRED/TWSE/RSS/crash-watch work without it.",
   "mcpServers": {
-    "polydig-news": {
+    "market-scan-news": {
       "command": "uvx",
-      "args": ["--from", "git+https://github.com/jaylooloomi/market-scan", "polydig-news-mcp"]
+      "args": ["--from", "git+https://github.com/jaylooloomi/market-scan", "market-scan-news-mcp"]
     },
-    "polydig-data": {
+    "market-scan-data": {
       "command": "uvx",
-      "args": ["--from", "git+https://github.com/jaylooloomi/market-scan", "polydig-data-mcp"]
+      "args": ["--from", "git+https://github.com/jaylooloomi/market-scan", "market-scan-data-mcp"]
     },
-    "polydig-price": {
+    "market-scan-price": {
       "command": "uvx",
-      "args": ["--from", "git+https://github.com/jaylooloomi/market-scan", "polydig-price-mcp"]
+      "args": ["--from", "git+https://github.com/jaylooloomi/market-scan", "market-scan-price-mcp"]
     },
-    "polydig-policy": {
+    "market-scan-policy": {
       "command": "uvx",
-      "args": ["--from", "git+https://github.com/jaylooloomi/market-scan", "polydig-policy-mcp"]
+      "args": ["--from", "git+https://github.com/jaylooloomi/market-scan", "market-scan-policy-mcp"]
     },
-    "polydig-roadmap": {
+    "market-scan-roadmap": {
       "command": "uvx",
-      "args": ["--from", "git+https://github.com/jaylooloomi/market-scan", "polydig-roadmap-mcp"]
+      "args": ["--from", "git+https://github.com/jaylooloomi/market-scan", "market-scan-roadmap-mcp"]
     }
   }
 }

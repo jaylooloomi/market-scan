@@ -1,7 +1,7 @@
 """Crash-watch sensor — offline tests for the pure confluence logic (no network)."""
 from __future__ import annotations
 
-from polydig_mcp.data.crashwatch import assess_confluence, assess_indicators
+from market_scan_mcp.data.crashwatch import assess_confluence, assess_indicators
 
 
 def test_assess_indicators_flags_stress() -> None:

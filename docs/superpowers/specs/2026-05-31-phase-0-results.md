@@ -1,15 +1,15 @@
-# PolyDig Phase 0 — Validation Results & Go/No-Go Decision
+# Market Scan Phase 0 — Validation Results & Go/No-Go Decision
 
 **Date**: 2026-05-31
 **Author**: Autonomous run by Claude Haiku 4.5 on Arthur's instruction
-**Parent docs**: [`2026-05-31-polydig-design.md`](2026-05-31-polydig-design.md), [`2026-05-31-phase-0-validator-plan.md`](../plans/2026-05-31-phase-0-validator-plan.md)
+**Parent docs**: [`2026-05-31-market-scan-design.md`](2026-05-31-market-scan-design.md), [`2026-05-31-phase-0-validator-plan.md`](../plans/2026-05-31-phase-0-validator-plan.md)
 **Raw output**: [`reports/2026-05-31_validator/`](../../../reports/2026-05-31_validator/)
 
 ---
 
 ## TL;DR
 
-> # ✅ **GO** — PolyDig 的根本假設驗證通過，啟動 Phase 1
+> # ✅ **GO** — Market Scan 的根本假設驗證通過，啟動 Phase 1
 >
 > **4 / 5 cases** 有至少 1 個「強領先」trigger，**5 / 5 cases** 有至少 1 個「領先」trigger（強或弱）。
 > 15 個測試點中：6 強領先 / 5 弱領先 / 3 太晚 / 1 無效。
@@ -95,7 +95,7 @@
 
 ---
 
-## 對 PolyDig 系統設計的影響
+## 對 Market Scan 系統設計的影響
 
 ### 必須做的修正
 
@@ -151,7 +151,7 @@
 
 ## 結論
 
-> PolyDig 不是空想。在 15 個歷史測試點中，**11 個 (73%)** 有明確的領先 edge，其中 **6 個 (40%)** 是強領先。
+> Market Scan 不是空想。在 15 個歷史測試點中，**11 個 (73%)** 有明確的領先 edge，其中 **6 個 (40%)** 是強領先。
 > 系統的核心假設「**事件發酵前能被偵測、且後續股價有顯著 alpha**」在實證上**成立**。
 >
 > 可以放心啟動 Phase 1，把 5 sensors 蓋起來。

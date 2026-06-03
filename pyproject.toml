@@ -3,9 +3,9 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "polydig"
+name = "market-scan"
 version = "0.1.0"
-description = "PolyDig — leading-edge stock-theme detection for the Taiwan market (Claude Code plugin)"
+description = "Market Scan — leading-edge stock-theme detection for the Taiwan market (Claude Code plugin)"
 authors = [{name = "Arthur", email = "arthurwang@think4u-tech.com"}]
 requires-python = ">=3.11"
 dependencies = [
@@ -34,17 +34,17 @@ dev = [
 ]
 
 [project.scripts]
-polydig-validator = "polydig_validator.cli:main"
-polydig-daily = "polydig_mcp.daily_cli:main"
-polydig-metrics = "polydig_mcp.reviewer.metrics:main"
-polydig-news-mcp = "polydig_mcp.news.server:main"
-polydig-data-mcp = "polydig_mcp.data.server:main"
-polydig-price-mcp = "polydig_mcp.price.server:main"
-polydig-policy-mcp = "polydig_mcp.policy.server:main"
-polydig-roadmap-mcp = "polydig_mcp.roadmap.server:main"
+market-scan-validator = "market_scan_validator.cli:main"
+market-scan-daily = "market_scan_mcp.daily_cli:main"
+market-scan-metrics = "market_scan_mcp.reviewer.metrics:main"
+market-scan-news-mcp = "market_scan_mcp.news.server:main"
+market-scan-data-mcp = "market_scan_mcp.data.server:main"
+market-scan-price-mcp = "market_scan_mcp.price.server:main"
+market-scan-policy-mcp = "market_scan_mcp.policy.server:main"
+market-scan-roadmap-mcp = "market_scan_mcp.roadmap.server:main"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/polydig_validator", "src/polydig_mcp"]
+packages = ["src/market_scan_validator", "src/market_scan_mcp"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

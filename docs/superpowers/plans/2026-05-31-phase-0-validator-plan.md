@@ -1,16 +1,16 @@
-# PolyDig Phase 0 — Implementation Plan
+# Market Scan Phase 0 — Implementation Plan
 
 **Date**: 2026-05-31
-**Parent spec**: [`docs/superpowers/specs/2026-05-31-polydig-design.md`](../specs/2026-05-31-polydig-design.md)
+**Parent spec**: [`docs/superpowers/specs/2026-05-31-market-scan-design.md`](../specs/2026-05-31-market-scan-design.md)
 **Owner**: Autonomous build (Claude Haiku 4.5) on Arthur's instruction
 **Status**: Building
 
 ## Goal
-Implement and run the Leading Edge Validator on 15 test points (5 cases × 3 trigger dates each), produce a go/no-go decision report for the entire PolyDig concept.
+Implement and run the Leading Edge Validator on 15 test points (5 cases × 3 trigger dates each), produce a go/no-go decision report for the entire Market Scan concept.
 
 ## Build Steps
 
-1. **Project scaffold** — `pyproject.toml`, `requirements.txt`, `src/polydig_validator/` package layout
+1. **Project scaffold** — `pyproject.toml`, `requirements.txt`, `src/market_scan_validator/` package layout
 2. **Config file** — `cases.json` with 5 cases × 3 triggers × representative tickers, plus thresholds and windows
 3. **Data fetcher** — `data_fetcher.py` wraps yfinance, fetches OHLC for Taiwan stocks (.TW/.TWO) and TAIEX (^TWII), with trading-day alignment helpers
 4. **Excess return calc** — `excess_return.py` computes per-stock returns relative to TAIEX baseline over T-90→T-1 (pre) and T-1→T+7/30/90/180 (post) windows. Handles holiday/missing-data fallbacks via nearest-trading-day search

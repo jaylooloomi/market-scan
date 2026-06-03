@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from datetime import date, timedelta
 
-from polydig_validator.net_alpha import (
+from market_scan_validator.net_alpha import (
     compute_case_ticker,
     compute_ticker_net,
     exit_with_rules,

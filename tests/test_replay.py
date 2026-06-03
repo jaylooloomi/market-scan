@@ -12,7 +12,7 @@ import json
 from datetime import date
 from pathlib import Path
 
-from polydig_mcp.reviewer.replay import replay_series
+from market_scan_mcp.reviewer.replay import replay_series
 
 _DATA = Path(__file__).resolve().parents[1] / "reports" / "audit" / "gdelt-wuhan-2019.json"
 

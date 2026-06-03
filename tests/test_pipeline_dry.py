@@ -10,8 +10,8 @@ import sys
 sys.path.insert(0, "src")
 sys.stdout.reconfigure(encoding="utf-8")
 
-from polydig_mcp.history.store import ThemeStore
-from polydig_mcp.reviewer.pipeline import run_daily
+from market_scan_mcp.history.store import ThemeStore
+from market_scan_mcp.reviewer.pipeline import run_daily
 
 
 def mock_signals():
@@ -47,7 +47,7 @@ def main() -> int:
     assert len(result["candidates"]) >= 3, "expected >=3 candidates (error signal skipped)"
     grades = {v["signal_grade"] for v in result["verdicts"]}
     assert grades & {"strong", "watchlist"}, "expected at least one strong/watchlist verdict"
-    assert "PolyDig 每日研究報告" in result["report_md"]
+    assert "Market Scan 每日研究報告" in result["report_md"]
     assert "因果樹" in result["report_md"]
 
     print("\n=== REPORT (first 1200 chars) ===")

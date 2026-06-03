@@ -1,12 +1,12 @@
-# PolyDig Scheduling
+# Market Scan Scheduling
 
 The scheduler runs the daily pipeline at **06:00 Asia/Taipei**.
 
 ## Python scheduler (cross-platform)
 
 ```bash
-pip install "polydig[schedule]"
-python -m polydig_mcp.scheduler --mode dry --output reports
+pip install "market-scan[schedule]"
+python -m market_scan_mcp.scheduler --mode dry --output reports
 ```
 
 Options:
@@ -19,35 +19,35 @@ Options:
 
 ```
 # crontab -e
-0 6 * * * cd /path/to/polydig && /path/to/.venv/bin/python -m polydig_mcp.scheduler --mode dry >> logs/scheduler.log 2>&1
+0 6 * * * cd /path/to/market-scan && /path/to/.venv/bin/python -m market_scan_mcp.scheduler --mode dry >> logs/scheduler.log 2>&1
 ```
 
 Or run once per invocation (simpler, no daemon):
 
 ```
-0 6 * * * cd /path/to/polydig && /path/to/.venv/bin/polydig-daily --mode dry >> logs/daily.log 2>&1
+0 6 * * * cd /path/to/market-scan && /path/to/.venv/bin/market-scan-daily --mode dry >> logs/daily.log 2>&1
 ```
 
 ## Windows Task Scheduler (one-liner)
 
 ```powershell
-schtasks /Create /SC DAILY /TN "PolyDigDaily" /TR "C:\Python314\python.exe -m polydig_mcp.scheduler --mode dry" /ST 06:00 /F
+schtasks /Create /SC DAILY /TN "MarketScanDaily" /TR "C:\Python314\python.exe -m market_scan_mcp.scheduler --mode dry" /ST 06:00 /F
 ```
 
 Or using the CLI directly:
 
 ```powershell
-schtasks /Create /SC DAILY /TN "PolyDigDaily" /TR "C:\path\to\.venv\Scripts\polydig-daily.exe --mode dry" /ST 06:00 /F
+schtasks /Create /SC DAILY /TN "MarketScanDaily" /TR "C:\path\to\.venv\Scripts\market-scan-daily.exe --mode dry" /ST 06:00 /F
 ```
 
 To verify the task was created:
 
 ```powershell
-schtasks /Query /TN "PolyDigDaily"
+schtasks /Query /TN "MarketScanDaily"
 ```
 
 To delete it:
 
 ```powershell
-schtasks /Delete /TN "PolyDigDaily" /F
+schtasks /Delete /TN "MarketScanDaily" /F
 ```

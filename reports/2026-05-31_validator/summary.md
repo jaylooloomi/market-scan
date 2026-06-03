@@ -1,4 +1,4 @@
-# PolyDig Phase 0 — Leading Edge Validator Summary
+# Market Scan Phase 0 — Leading Edge Validator Summary
 
 **Run date**: 2026-05-31
 **Config**: `cases.json`

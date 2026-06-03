@@ -9,7 +9,7 @@ try:
 except Exception:
     pass
 
-import polydig_mcp.reporting.telegram as tg
+import market_scan_mcp.reporting.telegram as tg
 
 
 def main() -> int:

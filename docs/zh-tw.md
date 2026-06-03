@@ -1,8 +1,8 @@
-# PolyDig — 繁體中文說明
+# Market Scan — 繁體中文說明
 
 > 台股題材**早期**偵測 —— 在事件還沒發酵時抓到。
 
-PolyDig 是**研究助理**(不自動下單)。掃描 5 個訊號源,推理「事件 → 受益族群」的因果樹,找歷史對應,每日產出中文研究報告,讓你比市場早 N 天/週發現題材。
+Market Scan 是**研究助理**(不自動下單)。掃描 5 個訊號源,推理「事件 → 受益族群」的因果樹,找歷史對應,每日產出中文研究報告,讓你比市場早 N 天/週發現題材。
 
 ## 系統靈魂
 > **找的是事件還沒發酵、有領先效果的訊號。**
@@ -22,7 +22,7 @@ TELEGRAM_CHAT_ID=你的_chat_id          # 你的 Telegram user id;需先對 bot
 ```
 沒 token 時 FinMind 工具回 graceful error,RSS / FRED / TWSE 感測器照常運作。
 
-**Telegram 推播**:設好上面兩個 Telegram 變數後,`polydig-daily --telegram` 會把報告推到 Telegram;或用模組推任意文字:`python -m polydig_mcp.reporting.telegram <檔案>`。每日 routine 已設定成推送 Claude 整理過的乾淨摘要。
+**Telegram 推播**:設好上面兩個 Telegram 變數後,`market-scan-daily --telegram` 會把報告推到 Telegram;或用模組推任意文字:`python -m market_scan_mcp.reporting.telegram <檔案>`。每日 routine 已設定成推送 Claude 整理過的乾淨摘要。
 
 ## 用法
 
@@ -31,9 +31,9 @@ TELEGRAM_CHAT_ID=你的_chat_id          # 你的 Telegram user id;需先對 bot
 
 **B. Headless(排程 / CI):**
 ```bash
-polydig-daily --mode dry      # 啟發式 Reviewer,離線可跑(demo)
-polydig-daily --mode llm      # LLM Reviewer(需 ANTHROPIC_API_KEY)
-polydig-daily --persist ./vector_db   # 啟用 Chroma 向量 RAG
+market-scan-daily --mode dry      # 啟發式 Reviewer,離線可跑(demo)
+market-scan-daily --mode llm      # LLM Reviewer(需 ANTHROPIC_API_KEY)
+market-scan-daily --persist ./vector_db   # 啟用 Chroma 向量 RAG
 # → 產出 reports/YYYY-MM-DD.md
 ```
 

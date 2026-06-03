@@ -1,4 +1,4 @@
-# PolyDig 優化建議 —— 產品經理視角(使用者 × 使用流程)
+# Market Scan 優化建議 —— 產品經理視角(使用者 × 使用流程)
 
 **作者視角**:資深產品經理(消費級 + 專業級金融工具)
 **日期**:2026-06-01 ｜ **版本**:v2(經 `pm-reviewer` agent 審查後修訂,評分 B− → 見文末修訂紀錄)
@@ -32,7 +32,7 @@
 | **S3 突發事件追** | 「最近 XX 事件,台股誰受惠?」 | 受益族群地圖 |
 | **S4 回溯驗證(信任情境)** | (目前無一級入口) | 「它過去抓得到嗎?」自己驗證、建立信任 |
 
-→ **S4 是「信任情境」**。關鍵更正:**回測能力其實已存在**(`run_recall_suite`/`run_backtest_case`,[backtest.py](src/polydig_mcp/reviewer/backtest.py);以及 `polydig-validator` CLI)。所以 S4 不是「從頭開發」,而是「**把既有回測模組包成 `/dig replay <題材>` 指令**」——成本約 1-2 天,**因此 S4 應升到 P0**(與 demo 並列)。
+→ **S4 是「信任情境」**。關鍵更正:**回測能力其實已存在**(`run_recall_suite`/`run_backtest_case`,[backtest.py](src/market_scan_mcp/reviewer/backtest.py);以及 `market-scan-validator` CLI)。所以 S4 不是「從頭開發」,而是「**把既有回測模組包成 `/dig replay <題材>` 指令**」——成本約 1-2 天,**因此 S4 應升到 P0**(與 demo 並列)。
 
 ---
 
@@ -58,7 +58,7 @@
 
 | 優先 | 建議 | 現況 vs 要做 | 解哪個痛點 |
 |---|---|---|---|
-| **P0** | **降 onboarding 摩擦** | `--demo` flag **已存在但預設關**([daily_cli.py](src/polydig_mcp/daily_cli.py))。**要做的是**:首跑偵測到無 token → 自動提示/切 demo;加 `polydig setup` token 精靈 | 安裝/設定棄用 |
+| **P0** | **降 onboarding 摩擦** | `--demo` flag **已存在但預設關**([daily_cli.py](src/market_scan_mcp/daily_cli.py))。**要做的是**:首跑偵測到無 token → 自動提示/切 demo;加 `market-scan setup` token 精靈 | 安裝/設定棄用 |
 | **P0** | **S4 回溯變一級功能** | `/dig replay <題材>`——**包裝既有 `backtest.py`,非從頭做**(1-2 天) | 信任 |
 | **P0** | **信任層** | 報告附該訊號的歷史佐證。**注意區分**:`lag_days`(已存在於 themes.json,**現在就能顯示**)vs `hit_rate`(需 live 累積,見 §5) | 「該不該信」 |
 | P1 | **報告漸進式揭露** | 預設只看 🟢 強訊號 3 行摘要 + 「先看哪一檔」建議,點開才看全因果樹 | 資訊過載 |
@@ -92,7 +92,7 @@
 
 ## 7. 結論
 
-> **PolyDig 不缺功能,缺的是「讓人敢用、敢信」。** 三件最重要:① 把 `--demo`/設定精靈做好(注意:這是**要做**的功能,不是現成預設);② 把**回溯驗證**包成一級指令(`backtest.py` 已有,成本低,應 P0);③ 在報告裡放**現在就能顯示的 lag_days**,並把 `hit_rate` 誠實標為 T+90 後才有。信任不能等——沒有它,再準的訊號使用者也不會照做。
+> **Market Scan 不缺功能,缺的是「讓人敢用、敢信」。** 三件最重要:① 把 `--demo`/設定精靈做好(注意:這是**要做**的功能,不是現成預設);② 把**回溯驗證**包成一級指令(`backtest.py` 已有,成本低,應 P0);③ 在報告裡放**現在就能顯示的 lag_days**,並把 `hit_rate` 誠實標為 T+90 後才有。信任不能等——沒有它,再準的訊號使用者也不會照做。
 
 ---
 

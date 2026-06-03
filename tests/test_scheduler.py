@@ -26,15 +26,15 @@ def main() -> int:
         return 0
 
     # Build the scheduler without starting it
-    from polydig_mcp.scheduler import _build_scheduler, HOUR, MINUTE, TZ
+    from market_scan_mcp.scheduler import _build_scheduler, HOUR, MINUTE, TZ
 
     sched = _build_scheduler(mode="dry", output="reports", persist=None, db=None)
 
     jobs = sched.get_jobs()
     assert len(jobs) >= 1, f"expected at least 1 job, got {len(jobs)}"
 
-    daily_job = next((j for j in jobs if j.id == "polydig_daily"), None)
-    assert daily_job is not None, "job 'polydig_daily' not found"
+    daily_job = next((j for j in jobs if j.id == "market-scan_daily"), None)
+    assert daily_job is not None, "job 'market-scan_daily' not found"
 
     trigger = daily_job.trigger
     assert isinstance(trigger, CronTrigger), f"expected CronTrigger, got {type(trigger)}"

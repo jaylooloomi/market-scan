@@ -10,9 +10,9 @@ try:
 except Exception:
     pass
 
-from polydig_mcp.common.envelope import Signal, error_signal, now_iso
-from polydig_mcp.common.errors import SensorError
-from polydig_mcp.common.settings import Settings
+from market_scan_mcp.common.envelope import Signal, error_signal, now_iso
+from market_scan_mcp.common.errors import SensorError
+from market_scan_mcp.common.settings import Settings
 
 
 def _settings(**kw):

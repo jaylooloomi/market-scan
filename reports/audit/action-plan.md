@@ -1,4 +1,4 @@
-# PolyDig — 整合行動計畫（架構 + VC 合一的優先序）
+# Market Scan — 整合行動計畫（架構 + VC 合一的優先序）
 
 **用途**：把 [architect-review.md](reports/audit/architect-review.md) §5 與 [vc-analysis.md](reports/audit/vc-analysis.md) §7 的建議，**合併成一條時間軸**——回答「如果我是 Arthur，週一早上做什麼、下週做什麼、這個月做什麼」。
 **注意**：這是**分析建議**（要做什麼 + 為什麼），不是已執行的修改。要我實作其中工程項，回「開始修」。
@@ -7,7 +7,7 @@
 
 ## 🎯 如果只能做一件事
 
-> **今天就開始 `polydig-daily --db ./polydig.db` 每天跑。**
+> **今天就開始 `market-scan-daily --db ./market-scan.db` 每天跑。**
 > 成本近乎零，卻同時解三個最大問題：① 啟動「核心賭注（即時偵測）」的**線上前瞻驗證**（VC §2）；② 按下唯一會複利的護城河——**前瞻語料**——的計時器（VC §3）；③ 讓跨週新聞基線「越跑越準」（routine-setup 文件已述）。**愈晚開始，愈晚有資料證明這東西能賺錢。**
 
 ---

@@ -14,15 +14,15 @@ from pathlib import Path
 sys.path.insert(0, "src")
 sys.stdout.reconfigure(encoding="utf-8")
 
-from polydig_mcp.storage.db import PolyDigDB
+from market_scan_mcp.storage.db import MarketScanDB
 
 
 def main() -> int:
     print("=== Gap 2: SQLite Storage Layer ===\n")
 
     with tempfile.TemporaryDirectory() as tmpdir:
-        db_path = Path(tmpdir) / "test_polydig.db"
-        db = PolyDigDB(db_path)
+        db_path = Path(tmpdir) / "test_market-scan.db"
+        db = MarketScanDB(db_path)
 
         # ── signals round-trip ─────────────────────────────────────────────
         sig = {

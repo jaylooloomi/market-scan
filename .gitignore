@@ -44,7 +44,7 @@ desktop.ini
 secrets/
 config/local.json
 
-# PolyDig runtime artifacts
+# Market Scan runtime artifacts
 /data/cache/
 /data/raw/
 /vector_db/

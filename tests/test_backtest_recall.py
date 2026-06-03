@@ -10,7 +10,7 @@ import sys
 sys.path.insert(0, "src")
 sys.stdout.reconfigure(encoding="utf-8")
 
-from polydig_mcp.reviewer.backtest import run_recall_suite, recall_at_k, DEEP_CASE_IDS
+from market_scan_mcp.reviewer.backtest import run_recall_suite, recall_at_k, DEEP_CASE_IDS
 
 
 def main() -> int:

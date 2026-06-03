@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone
 
-from polydig_mcp.news.sources import FULL_CONFIDENCE_COUNT, detect_term_spikes
+from market_scan_mcp.news.sources import FULL_CONFIDENCE_COUNT, detect_term_spikes
 
 
 def _build(recent: dict[str, int], older: dict[str, int]) -> list[dict]:

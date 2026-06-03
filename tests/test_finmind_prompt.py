@@ -9,10 +9,10 @@ try:
 except Exception:
     pass
 
-import polydig_mcp.data.finmind as fm
-from polydig_mcp.common.errors import SensorError
-from polydig_mcp.common.settings import Settings
-from polydig_mcp.reviewer.prompt import (
+import market_scan_mcp.data.finmind as fm
+from market_scan_mcp.common.errors import SensorError
+from market_scan_mcp.common.settings import Settings
+from market_scan_mcp.reviewer.prompt import (
     REVIEWER_SYSTEM,
     build_reviewer_user_prompt,
     build_scout_user_prompt,

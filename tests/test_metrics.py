@@ -15,18 +15,18 @@ try:
 except Exception:
     pass
 
-from polydig_mcp.reviewer.metrics import (
+from market_scan_mcp.reviewer.metrics import (
     compute_metrics,
     finmind_forward_return,
     hit_rate,
     signal_volume,
 )
-from polydig_mcp.storage.db import PolyDigDB
+from market_scan_mcp.storage.db import MarketScanDB
 
 
 def main() -> int:
     print("=== Spec §10 operational metrics ===\n")
-    db = PolyDigDB(os.path.join(tempfile.mkdtemp(), "metrics.db"))
+    db = MarketScanDB(os.path.join(tempfile.mkdtemp(), "metrics.db"))
 
     base = {
         "theme": "AI", "trigger": "ChatGPT", "signal_grade": "strong", "confidence": 0.9,

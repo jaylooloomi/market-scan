@@ -7,7 +7,7 @@ from __future__ import annotations
 
 
 def test_get_history_match_returns_similar_themes() -> None:
-    from polydig_mcp.data import server as data
+    from market_scan_mcp.data import server as data
 
     r = data.get_history_match("航運 貨櫃 運價 SCFI 長榮 陽明 萬海 散裝", n_results=3)
     assert r["signal_type"] == "history_match"
@@ -17,7 +17,7 @@ def test_get_history_match_returns_similar_themes() -> None:
 
 
 def test_get_history_match_shape() -> None:
-    from polydig_mcp.data import server as data
+    from market_scan_mcp.data import server as data
 
     r = data.get_history_match("AI 伺服器 CoWoS", n_results=2)
     assert r["source"] == "data.history"

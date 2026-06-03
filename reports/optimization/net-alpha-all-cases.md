@@ -1,6 +1,6 @@
 # Net-alpha across all Phase 0 cases(5 案例淨報酬分布 + 依題材時間軸出場)
 
-**日期**:2026-06-01 ｜ **工具**:`polydig_validator.net_alpha:net_alpha_all_cases`(`python -m polydig_validator.net_alpha`)
+**日期**:2026-06-01 ｜ **工具**:`market_scan_validator.net_alpha:net_alpha_all_cases`(`python -m market_scan_validator.net_alpha`)
 **資料**:yfinance 真實歷史價 ｜ **進場**:每案 `cases.json` 的 **mid** trigger(可行動點)
 
 > A=毛(T-1→T+180) · B=最保守 net(T+2 進場+0.5% 成本→T+180) · C@N=net(T+2、−20% 停損 / N 日出場) · **C@hold=依該題材 `themes.json` 的 hold_period 出場**(parser 將「1-3 個月」等自由文字轉成天數,取上緣)。**raw return、未扣 beta**;`*`=hold 視窗超出可得股價(截斷)。
