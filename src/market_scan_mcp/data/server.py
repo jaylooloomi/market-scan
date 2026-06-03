@@ -6,7 +6,6 @@ Tools:
     get_commodity_price(commodity, days)                 -> commodity futures
     get_shipping_index(index, days)                      -> freight index (proxy)
     get_us_sector_move(sector, days)                     -> US sector % change (FRED keyless)
-    get_dram_price()                                     -> STUB (paywalled)
     list_datasets()                                      -> available helpers
 """
 from __future__ import annotations
@@ -232,16 +231,6 @@ def get_us_sector_move(sector: str = "nasdaq", days: int = 30) -> dict[str, Any]
         content={**data, "tw_theme_families": tw_families},
         anomaly_score=round(score, 3) if score is not None else None,
     ).to_dict()
-
-
-@mcp.tool()
-def get_dram_price() -> dict[str, Any]:
-    """DRAM/NAND spot price — STUB (TrendForce/DRAMeXchange paywalled)."""
-    try:
-        data = macro.dram_spot()
-    except SensorError as e:
-        return error_signal("data.dram", "dram_price", e.message)
-    return data
 
 
 @mcp.tool()

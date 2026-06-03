@@ -5,7 +5,6 @@ Tools:
     fetch_news(source, since_days, query)  -> recent news items
     detect_news_anomaly(window_days, ...)  -> spiking terms (anomaly signals)
     google_trends_check(keyword, region)   -> search-interest trend
-    fetch_ptt(board)                       -> STUB (anti-bot; Phase 5+)
 """
 from __future__ import annotations
 
@@ -250,26 +249,6 @@ def google_trends_check(
         },
         raw_url=f"https://trends.google.com/trends/explore?q={keyword}&geo={region}",
         anomaly_score=round(score, 3) if score is not None else None,
-    ).to_dict()
-
-
-@mcp.tool()
-def fetch_ptt(board: str = "Stock", pages: int = 1) -> dict[str, Any]:
-    """STUB — PTT/Dcard social-buzz sensor.
-
-    PTT has an 18+ over-18 cookie gate plus anti-scraping; Dcard requires
-    headers/tokens. Deferred to Phase 5+. Returns a not_implemented signal so
-    the Scout agent can treat the source as "known but offline".
-    """
-    return Signal(
-        source="news.ptt",
-        signal_type="social_buzz",
-        content={
-            "status": "not_implemented",
-            "board": board,
-            "todo": "implement PTT over-18 cookie + Dcard header crawl in Phase 5+",
-        },
-        anomaly_score=None,
     ).to_dict()
 
 

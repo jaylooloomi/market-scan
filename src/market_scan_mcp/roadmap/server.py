@@ -3,7 +3,6 @@
 Tools:
     list_tracked_companies()             -> companies whose roadmaps we watch
     parse_earnings_call(text, company)   -> extract roadmap/spec-upgrade keyword hits
-    fetch_corp_roadmap(company)          -> STUB (transcripts paywalled / PDF-gated)
 
 The keyword extractor is real and testable (give it transcript text). Fetching
 the transcripts (MOPS PDFs, intl earnings calls) is the part that needs robust
@@ -70,26 +69,6 @@ def parse_earnings_call(text: str, company: str = "") -> dict[str, Any]:
             "hit_count": len(hits),
         },
         anomaly_score=round(score, 3),
-    ).to_dict()
-
-
-@mcp.tool()
-def fetch_corp_roadmap(company: str) -> dict[str, Any]:
-    """STUB — fetch a company's latest roadmap/earnings transcript.
-
-    Intl earnings transcripts are paywalled / scattered; MOPS 法說會 are PDFs with
-    inconsistent layout. Deferred: feed transcript text to parse_earnings_call.
-    """
-    return Signal(
-        source="roadmap.fetch",
-        signal_type="roadmap_signal",
-        content={
-            "status": "not_implemented",
-            "company": company,
-            "todo": "MOPS PDF parser + intl transcript source (Phase 4). "
-                    "For now, paste transcript text into parse_earnings_call.",
-        },
-        anomaly_score=None,
     ).to_dict()
 
 

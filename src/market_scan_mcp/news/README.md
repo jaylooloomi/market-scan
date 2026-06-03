@@ -10,7 +10,6 @@
 | `fetch_news(source, since_days, query, limit)` | 抓近期新聞;`source` 可填 feed id / 語言(`zh`/`en`)/ 類別(`finance`/`technology`),`None`=全部 |
 | `detect_news_anomaly(window_days, threshold, source, max_terms)` | 偵測近期 vs 前期的詞頻 spike,回傳異常訊號(含 `anomaly_score`) |
 | `google_trends_check(keyword, region, timeframe)` | 查 Google 搜尋熱度趨勢(pytrends,無官方 API,會被 429 限流 → graceful error) |
-| `fetch_ptt(board, pages)` | **STUB** — PTT/Dcard 反爬,Phase 5+ 再做 |
 
 ## 來源(RSS)
 
